@@ -56,31 +56,30 @@ def prefix2netmask(prefs):
 	return str(b[0]) + "." + str(b[1]) + "." + str(b[2]) + "." + str(b[3])
 
 def create_dhcp_config(d1):
-    with open(d1['dhcp_template']) as f:
-        j2 = f.read()
-    p1 = {}
-    p1['subnet'] = d1['ip_pool']['subnet'].split('/')[0]
-    p1['netmask'] = prefix2netmask(d1['ip_pool']['subnet'].split('/')[1])
-    p1['range_min'] = d1['ip_pool']['range']['min']
-    p1['range_max'] = d1['ip_pool']['range']['max']
-    p1['gateway'] = d1['ip_pool']['gateway']
-    p1['option150'] = d1['ip_pool']['option-150']
-    p1['vm_data'] = {}
-    for i in d1['vm'].keys():
-        p1['vm_data'].update({i : {'mac' : d1['vm'][i]['mac']}})
+	with open(d1['dhcp_template']) as f:
+		j2 = f.read()
+	p1 = {}
+	p1['subnet'] = d1['ip_pool']['subnet'].split('/')[0]
+	p1['netmask'] = prefix2netmask(d1['ip_pool']['subnet'].split('/')[1])
+	p1['range_min'] = d1['ip_pool']['range']['min']
+	p1['range_max'] = d1['ip_pool']['range']['max']
+	p1['gateway'] = d1['ip_pool']['gateway']
+	p1['option150'] = d1['ip_pool']['option-150']
+	p1['vm_data'] = {}
+	for i in d1['vm'].keys():
+		if d1['vm'][i]['type'] == 'vex':
+			p1['vm_data'].update({i : {'mac' : d1['vm'][i]['mac']}})
     #print(p1)
-    config1=Template(j2).render(p1)
-    if not os.path.exists(d1['DEST_DIR']):
-        os.makedirs(d1['DEST_DIR'])
-    else:
-        if not os.path.isdir(d1['DEST_DIR']):
-            os.remove(d1['DEST_DIR'])
-            os.makedirs(d1['DEST_DIR'])
-    filename = f"{d1['DEST_DIR']}/dhcpd.conf"
-    with open(filename,"w") as f:
-        f.write(config1)
-    #print(config1)
-    #print(p1)
+	config1=Template(j2).render(p1)
+	if not os.path.exists(d1['DEST_DIR']):
+		os.makedirs(d1['DEST_DIR'])
+	else:
+		if not os.path.isdir(d1['DEST_DIR']):
+			os.remove(d1['DEST_DIR'])
+			os.makedirs(d1['DEST_DIR'])
+	filename = f"{d1['DEST_DIR']}/dhcpd.conf"
+	with open(filename,"w") as f:
+		f.write(config1)
 
 def junos_config(d1):
     f1=[]
