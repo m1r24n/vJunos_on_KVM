@@ -1,13 +1,13 @@
 system {
     host-name {{ hostname }};
     root-authentication {
-		encrypted-password "$6$IoTFZOhP$9129LjUsoOKtQMHhNAwFMlYUfeuF1.vjWOfosOG3BRa2MhTiqGpS6.kWozfzNeDbfc0naHWgwF0wgl7auB2bi1"; ## SECRET-DATA
+		encrypted-password "{{ junos_passwd }}"; ## SECRET-DATA
     }
     login {
-        user admin {
+        user {{ junos_user }} {
             class super-user;
             authentication {
-				encrypted-password "$6$IoTFZOhP$9129LjUsoOKtQMHhNAwFMlYUfeuF1.vjWOfosOG3BRa2MhTiqGpS6.kWozfzNeDbfc0naHWgwF0wgl7auB2bi1"; ## SECRET-DATA
+				encrypted-password "{{junos_passwd}}"; ## SECRET-DATA
             }
         }
     }

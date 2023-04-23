@@ -3,6 +3,8 @@ import subprocess
 import yaml
 from jinja2 import Template
 import os
+import json
+from passlib.hash import md5_crypt
 
 def get_mac_fxp0(d1):
 	vm = d1['vm'].keys()
@@ -16,7 +18,7 @@ def get_mac_fxp0(d1):
 
 
 def create_junos_config(d1):
-	with open(d1['junos_template']) as f:
+	with open(d1['template']['junos']) as f:
 		j2 = f.read()
 	p1 = {}
 	for i in d1['vm'].keys():
@@ -24,6 +26,8 @@ def create_junos_config(d1):
 			p1['hostname']=i
 			p1['ip_address']=f"{d1['vm'][i]['ip_address']}/{d1['ip_pool']['subnet'].split('/')[1]}"
 			p1['gateway']=d1['ip_pool']['gateway']
+			p1['junos_user']=d1['junos_login']['user']
+			p1['junos_passwd']=md5_crypt.hash(d1['junos_login']['password'])
 			config1=Template(j2).render(p1)
 			if not os.path.exists(d1['DEST_DIR']):
 				os.makedirs(d1['DEST_DIR'])
@@ -56,7 +60,7 @@ def prefix2netmask(prefs):
 	return str(b[0]) + "." + str(b[1]) + "." + str(b[2]) + "." + str(b[3])
 
 def create_dhcp_config(d1):
-	with open(d1['dhcp_template']) as f:
+	with open(d1['template']['dhcp']) as f:
 		j2 = f.read()
 	p1 = {}
 	p1['subnet'] = d1['ip_pool']['subnet'].split('/')[0]
@@ -110,7 +114,7 @@ def create_dhcp_tftp_config(d1):
 
 def check_argv(argv):
 	retval={}
-	cmd_list=['addbr','create','start','config']
+	cmd_list=['addbr','create','start','config','del','stop']
 	if len(argv) == 1:
 		print_syntax()
 	else:
@@ -126,17 +130,202 @@ def check_argv(argv):
 				retval['cmd'] = argv[1]
 				t1 = argv[0].split('/')
 				t2 = t1.pop()
-				retval['junos_template'] = '/'.join(t1) + '/' + retval['junos_template'] 
-				retval['dhcp_template'] = '/'.join(t1) + '/' + retval['dhcp_template']
+				retval['template']={
+							'junos':f"{'/'.join(t1)}/junos.j2",
+							'dhcp':f"{'/'.join(t1)}/dhcpd.j2"
+				}
 				retval['DEST_DIR'] = './result'
 
 	return retval
 
+def is_vm_defined(d1):
+	t1 = []
+	for i in d1['vm'].keys():
+		#if d1['vm'][i]['type'] == 'vex':
+		t1.append(i)
+	list_vm1=set(t1)
+	cmd="virsh list --all"
+	a = subprocess.check_output(cmd,shell=True)
+	# vm = a.decode().split("\n")[0].split('=')[1].replace("'","").replace('/>',"")
+	t1 = a.decode().split("\n")[2:]
+	list_vm2=[]
+	for i in t1:
+		if i:
+			list_vm2.append(i.strip().split()[1])
+		#list_vm2.append(i.strip().split())
+	t2=[]
+	for i in list_vm1:
+		if i in list_vm2:
+			t2.append(i)
+	vm_ok = set(t2)
+	retval = list_vm1 == vm_ok
+	if not retval:
+		diff1 = list(list_vm1.difference(vm_ok))
+		#print(diff1)
+		d1['vm_not_defined']=diff1
+	else:
+		d1['vm_not_defined']=[]
+	return retval
+
+def list_of_bridge(d1):
+	list_bridge=[]
+	for i in d1['vm'].keys():
+		for j in d1['vm'][i]['port'].values():
+			#print(j)
+			if j not in list_bridge:
+				list_bridge.append(j)
+	return list_bridge
+
+def is_bridge_defined(d1):
+	cmd="ip --json link list type bridge"
+	t1 = json.loads(subprocess.check_output(cmd,shell=True).decode())
+	#t2 = json.loads(t1)
+	#print(t1)
+	#print(type(t1))
+	t2 = []
+	for i in t1:
+		if i['ifname'] not in t1:
+			t2.append(i['ifname'])
+	#print(t2)
+	t3=list_of_bridge(d1)
+	# print("t3 ",t3)
+	st2=set(t2)
+	st3=set(t3)
+	#print("st2 ",st2)
+	#print("st3 ",st3)
+	d1['bridge_not_defined'] = st3.difference(st2)
+
 def add_bridge(d1):
-	print("starting the bridges")
+	if d1['bridge_not_defined']:
+		print(f"bridges {d1['bridge_not_defined']}")
+		print("starting the bridges")
+		for i in d1['bridge_not_defined']:
+			cmd = f"sudo ip link add dev {i} type bridge"
+			subprocess.check_output(cmd,shell=True)
+			# this is to hack the linux kernel to allow LLDP and LACP frame to be forwarded.
+			# it can only works with modified linux kernel.
+			cmd = f"echo 0x400c | sudo tee  /sys/class/net/{i}/bridge/group_fwd_mask"
+			subprocess.check_output(cmd,shell=True)
+			cmd = f"sudo ip link set dev {i} up"
+			subprocess.check_output(cmd,shell=True)
+	else:
+		print("bridges are defined")
+
+def define_vm(d1):
+	if d1['vm_not_defined']:
+		print("defining VM")
+		for i in d1['vm_not_defined']:
+			disk = d1['vm_dir'] + f"/{i}.img"
+			disk_type = d1['vm'][i]['type']
+			cmd = f"cp {d1['disk'][disk_type]} {disk}"
+			print(f"copying file from {d1['disk'][disk_type]} to {disk}")
+			subprocess.check_output(cmd,shell=True)
+			if d1['vm'][i]['type'] == 'vex':
+				cmd=f"""virt-install --name {i} --disk {disk},device=disk \
+--cpu IvyBridge,+vmx --sysinfo system.product="VM-VEX" \
+--ram 5120 --vcpu 4  \
+--osinfo ubuntu22.04 """
+				if d1['mgmt']['type'] == 'ovs':
+					cmd += f"--network bridge={d1['mgmt']['bridge']},virtualport_type=openvswitch "
+				else:
+					cmd += f"--network bridge={d1['mgmt']['bridge']} "
+				port = list(d1['vm'][i]['port'].keys())
+				port.sort()
+				for j in port:
+					cmd += f"--network bridge={d1['vm'][i]['port'][j]} "
+				cmd += f"--xml './devices/interface[1]/target/@dev={i}fxp0' "
+				if 'vlan' in d1['mgmt'].keys():
+					cmd += f"--xml './devices/interface[1]/vlan/tag/@id={d1['mgmt']['vlan']}' "
+				k = 2
+				l=0
+				for j in port:
+					cmd += f"--xml './devices/interface[{k}]/target/@dev={i}ge{l}' "
+					cmd += f"--xml './devices/interface[{k}]/mtu/@size=9500' "
+					k+=1
+					l+=1
+				cmd2 = """--console pty,target_type=serial \
+--noautoconsole --hvm --accelerate  --vnc \
+--virt-type=kvm --boot hd --noreboot"""
+				cmd += cmd2
+			elif d1['vm'][i]['type'] == 'alpine':
+				cmd=f"""virt-install --name {i} --disk {disk},device=disk \
+--ram 512 --vcpu 1 --osinfo alpinelinux3.15 \
+	"""
+				port = list(d1['vm'][i]['port'].keys())
+				port.sort()
+				for j in port:
+					cmd += f"--network bridge={d1['vm'][i]['port'][j]},model=e1000 "
+				cmd2 = """--console pty,target_type=serial \
+--noautoconsole --hvm --accelerate  --vnc \
+--virt-type=kvm --boot hd --noreboot"""
+				cmd += cmd2
+			elif d1['vm'][i]['type'] == 'ubuntu':
+				cmd=f"""virt-install --name {i} --disk {disk},device=disk \
+--ram 2048 --vcpu 1 --osinfo ubuntu22.04 \
+	"""
+				port = list(d1['vm'][i]['port'].keys())
+				port.sort()
+				for j in port:
+					cmd += f"--network bridge={d1['vm'][i]['port'][j]},model=e1000 "
+				cmd2 = """--console pty,target_type=serial \
+--noautoconsole --hvm --accelerate  --vnc \
+--virt-type=kvm --boot hd --noreboot"""
+				cmd += cmd2
+			print(f"installing VM {i} on the hypervisor")
+			subprocess.check_output(cmd,shell=True)
+	else:
+		print("VMs are defined")
+
 
 def create_vm(d1):
 	print("add VMs to hypervisor")
+	# is_bridge_defined(d1)
+	if d1['bridge_not_defined']:
+		print("not ok")
+		print(f"these {d1['bridge_not_defined']} are not defined")
+		add_bridge(d1)
+	else:
+		print("bridges are OK")
+	# is_vm_defined(d1)
+	if d1['vm_not_defined']:
+		print("not ok")
+		print(f"these {d1['vm_not_defined']} are not defined")
+		define_vm(d1)
+	else:
+		print("VMs are OK")
+	
 
 def start_vm(d1):
+	if d1['vm_not_defined']:
+		add_bridge(d1)
+		define_vm(d1)
 	print("start VMs on hypervisor")
+	for i in d1['vm'].keys():
+		print(f"starting {i}")
+		cmd = f"virsh start {i}"
+		subprocess.check_output(cmd,shell=True)
+
+def stop_vm(d1):
+	print("stop VMs on hypervisor")
+	for i in d1['vm'].keys():
+		print(f"stopping {i}")
+		cmd = f"virsh destroy {i}"
+		subprocess.check_output(cmd,shell=True)
+
+def delete_vm(d1):
+	print("stopping VMs on hypervisor")
+	for i in d1['vm'].keys():
+		print(f"stop vm {i}")
+		#cmd = f"virsh destroy {i}"
+		#subprocess.check_output(cmd,shell=True)
+		cmd = f"virsh undefine {i}"
+		subprocess.check_output(cmd,shell=True)
+		disk = d1['vm_dir'] + f"/{i}.img"
+		print(f"deleting disk {disk}")
+		cmd = f"rm {disk}"
+		subprocess.check_output(cmd,shell=True)
+	list_bridge = list_of_bridge(d1)
+	print(f"deleting bridge {list_bridge}")
+	for i in list_bridge:
+		cmd=f"sudo ip link set dev {i} down; sudo ip link del dev {i}"
+		subprocess.check_output(cmd,shell=True)
