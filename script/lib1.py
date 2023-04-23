@@ -4,35 +4,34 @@ import yaml
 from jinja2 import Template
 import os
 
-DEST_DIR='./result'
 def get_mac_fxp0(d1):
-    vm = d1['vm'].keys()
-    if d1['vm'][i]['type'] == 'vex':
-        for i in vm:
-		cmd=f"virsh dumpxml {i} | grep \"mac address\""
-		a = subprocess.check_output(cmd,shell=True)
-		mac = a.decode().split("\n")[0].split('=')[1].replace("'","").replace('/>',"")
-		d1['vm'][i]['mac']=mac
+	vm = d1['vm'].keys()
+	for i in vm:
+		if d1['vm'][i]['type'] == 'vex':
+			cmd=f"virsh dumpxml {i} | grep \"mac address\""
+			a = subprocess.check_output(cmd,shell=True)
+			mac = a.decode().split("\n")[0].split('=')[1].replace("'","").replace('/>',"")
+			d1['vm'][i]['mac']=mac
 
 
 
 def create_junos_config(d1):
-    with open(d1['junos_template']) as f:
-        j2 = f.read()
-    p1 = {}
-    for i in d1['vm'].keys():
+	with open(d1['junos_template']) as f:
+		j2 = f.read()
+	p1 = {}
+	for i in d1['vm'].keys():
 		if d1['vm'][i]['type'] == 'vex':
 			p1['hostname']=i
 			p1['ip_address']=f"{d1['vm'][i]['ip_address']}/{d1['ip_pool']['subnet'].split('/')[1]}"
 			p1['gateway']=d1['ip_pool']['gateway']
 			config1=Template(j2).render(p1)
-			if not os.path.exists(DEST_DIR):
-				os.makedirs(DEST_DIR)
+			if not os.path.exists(d1['DEST_DIR']):
+				os.makedirs(d1['DEST_DIR'])
 			else:
-				if not os.path.isdir(DEST_DIR):
-					os.remove(DEST_DIR)
-					os.makedirs(DEST_DIR)
-			filename = f"{DEST_DIR}/{i}.conf"
+				if not os.path.isdir(d1['DEST_DIR']):
+					os.remove(d1['DEST_DIR'])
+					os.makedirs(d1['DEST_DIR'])
+			filename = f"{d1['DEST_DIR']}/{i}.conf"
 			with open(filename,"w") as f:
 				f.write(config1)
         
@@ -71,13 +70,13 @@ def create_dhcp_config(d1):
         p1['vm_data'].update({i : {'mac' : d1['vm'][i]['mac']}})
     #print(p1)
     config1=Template(j2).render(p1)
-    if not os.path.exists(DEST_DIR):
-        os.makedirs(DEST_DIR)
+    if not os.path.exists(d1['DEST_DIR']):
+        os.makedirs(d1['DEST_DIR'])
     else:
-        if not os.path.isdir(DEST_DIR):
-            os.remove(DEST_DIR)
-            os.makedirs(DEST_DIR)
-    filename = f"{DEST_DIR}/dhcpd.conf"
+        if not os.path.isdir(d1['DEST_DIR']):
+            os.remove(d1['DEST_DIR'])
+            os.makedirs(d1['DEST_DIR'])
+    filename = f"{d1['DEST_DIR']}/dhcpd.conf"
     with open(filename,"w") as f:
         f.write(config1)
     #print(config1)
@@ -129,7 +128,8 @@ def check_argv(argv):
 				t1 = argv[0].split('/')
 				t2 = t1.pop()
 				retval['junos_template'] = '/'.join(t1) + '/' + retval['junos_template'] 
-				retval['dhcp_template'] = '/'.join(t1) + '/' + retval['dhcp_template'] 
+				retval['dhcp_template'] = '/'.join(t1) + '/' + retval['dhcp_template']
+				retval['DEST_DIR'] = './result'
 
 	return retval
 
