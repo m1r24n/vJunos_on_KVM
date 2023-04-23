@@ -18,7 +18,7 @@ This script is tested on ubuntu 22.04 + KVM + libvirt + python3 on supermicro E2
         cd /home/git
         git clone git@github.com:m1r24n/vJunos_on_KVM.git
 
-2. The python scripts used to deploy vJunos can be found under directory ./script
+2. The python scripts used to deploy vJunos can be found under directory [./script](./script)
 
         cd /home/git/home/git/vJunos_on_KVM/
 
