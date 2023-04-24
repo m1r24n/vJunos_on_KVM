@@ -182,18 +182,21 @@ def is_bridge_defined(d1):
 	#t2 = json.loads(t1)
 	#print(t1)
 	#print(type(t1))
-	t2 = []
-	for i in t1:
-		if i['ifname'] not in t1:
-			t2.append(i['ifname'])
-	#print(t2)
-	t3=list_of_bridge(d1)
-	# print("t3 ",t3)
-	st2=set(t2)
-	st3=set(t3)
-	#print("st2 ",st2)
-	#print("st3 ",st3)
-	d1['bridge_not_defined'] = st3.difference(st2)
+	print(t1)
+	if t1:
+		t2 = []
+		for i in t1:
+			if i:
+				if i['ifname'] not in t1:
+					t2.append(i['ifname'])
+		#print(t2)
+		t3=list_of_bridge(d1)
+		# print("t3 ",t3)
+		st2=set(t2)
+		st3=set(t3)
+		#print("st2 ",st2)
+		#print("st3 ",st3)
+		d1['bridge_not_defined'] = st3.difference(st2)
 
 def add_bridge(d1):
 	if d1['bridge_not_defined']:

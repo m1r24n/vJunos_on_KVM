@@ -45,6 +45,7 @@ vm:
       ge-0/0/3: l1p3
       ge-0/0/4: l1p4
       ge-0/0/5: l1p5
+      ge-0/0/6: l1p6
   leaf2:
     type: vex
     ip_address: 10.1.101.104
@@ -55,6 +56,7 @@ vm:
       ge-0/0/3: l2p3
       ge-0/0/4: l2p4
       ge-0/0/5: l2p5
+      ge-0/0/6: l2p6
   leaf3:
     type: vex
     ip_address: 10.1.101.105
@@ -65,6 +67,7 @@ vm:
       ge-0/0/3: l3p3
       ge-0/0/4: l3p4
       ge-0/0/5: l3p5
+      ge-0/0/6: l3p6
   leaf4:
     type: vex
     ip_address: 10.1.101.105
@@ -75,3 +78,32 @@ vm:
       ge-0/0/3: l4p3
       ge-0/0/4: l4p4
       ge-0/0/5: l4p5
+      ge-0/0/6: l4p6
+  svr1:
+    type: ubuntu
+    port:
+      eth0: l1p2
+      eth0: l2p2
+  svr2:
+    type: ubuntu
+    port:
+      eth0: l1p3
+      eth0: l2p3
+  svr3:
+    type: ubuntu
+    port:
+      eth0: l3p2
+      eth0: l3p3
+  svr4:
+    type: ubuntu
+    port:
+      eth0: l2p4
+  svr5:
+    type: ubuntu
+    port:
+      eth0: l3p4
+  svr6:
+    type: ubuntu
+    port:
+      eth0: l3p5
+      eth1: l3p5
