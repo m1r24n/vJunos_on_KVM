@@ -70,7 +70,7 @@ vm:
       ge-0/0/6: l3p6
   leaf4:
     type: vex
-    ip_address: 10.1.101.105
+    ip_address: 10.1.101.106
     port:
       ge-0/0/0: s1p3
       ge-0/0/1: s2p3

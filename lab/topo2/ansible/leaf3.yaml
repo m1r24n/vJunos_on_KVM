@@ -7,7 +7,7 @@ local_as: 65005
 as_list: 65000-65100
 loopback_ipv6: fc00:dead:beef:10::5/128
 overlay:
-    local_as: 420065005
+    local_as: 4200065005
     local_addr: fc00:dead:beef:10::5
     neighbors:
     - addr: fc00:dead:beef:10::1
