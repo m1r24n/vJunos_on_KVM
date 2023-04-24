@@ -26,7 +26,7 @@ vm:
       ge-0/0/0: s1p0
       ge-0/0/1: s1p1
       ge-0/0/2: s1p2
-      ge-0/0/3: s1p0
+      ge-0/0/3: s1p3
   spine2:
     type: vex
     ip_address: 10.1.101.102

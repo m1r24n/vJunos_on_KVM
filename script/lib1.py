@@ -16,8 +16,6 @@ def get_mac_fxp0(d1):
 			mac = a.decode().split("\n")[0].split('=')[1].replace("'","").replace('/>',"")
 			d1['vm'][i]['mac']=mac
 
-
-
 def create_junos_config(d1):
 	with open(d1['template']['junos']) as f:
 		j2 = f.read()
@@ -100,7 +98,7 @@ def print_syntax():
 	print("  start     : to start VMs on the hypervisor")
 	print("  config    : create configuration for DHCPD and TFTPD")
 
-def create_dhcp_tftp_config(d1):
+def create_config(d1):
 	#print(d1)
 	print("getting mac address info")
 	get_mac_fxp0(d1)
@@ -112,10 +110,12 @@ def create_dhcp_tftp_config(d1):
 	print("files are created on directory ./result")
 	print("upload file dhcpd.conf into dhcp server /etc/dhcpd/dhcpd.conf")
 	print(f"upload junos configuration files ({junos_config(d1)}), into root directory of tftp server")
+	print("Adding entries into  file ~/.ssh/config")
+	add_to_ssh_config(d1)
 
 def check_argv(argv):
 	retval={}
-	cmd_list=['addbr','create','start','config','del','stop']
+	cmd_list=['addbr','create','start','config','del','stop','test']
 	if len(argv) == 1:
 		print_syntax()
 	else:
@@ -183,25 +183,30 @@ def is_bridge_defined(d1):
 	#t2 = json.loads(t1)
 	#print(t1)
 	#print(type(t1))
-	#rint(t1)
-	if t1:
-		t2 = []
+	d1['bridge_not_defined']=[]
+	t2=list_of_bridge(d1)
+	if not t1:
+		d1['bridge_not_defined'] = t2
+	else:
+		t3 = []
 		for i in t1:
-			if i:
-				if i['ifname'] not in t1:
-					t2.append(i['ifname'])
+			if 'ifname' in i.keys():
+				t3.append(i['ifname'])
+		for i in t2:
+			if i not in t3:
+				d1['bridge_not_defined'].append(i)	
 		#print(t2)
-		t3=list_of_bridge(d1)
+	#print(d1['bridge_not_defined'])
 		# print("t3 ",t3)
-		st2=set(t2)
-		st3=set(t3)
-		#print("st2 ",st2)
-		#print("st3 ",st3)
-		d1['bridge_not_defined'] = st3.difference(st2)
+		# st2=set(t2)
+		# st3=set(t3)
+		# #print("st2 ",st2)
+		# #print("st3 ",st3)
+		# d1['bridge_not_defined'] = st3.difference(st2)
 
 def add_bridge(d1):
 	if d1['bridge_not_defined']:
-		print(f"bridges {d1['bridge_not_defined']}")
+		#print(f"bridges {d1['bridge_not_defined']}")
 		print("starting the bridges")
 		for i in d1['bridge_not_defined']:
 			cmd = f"sudo ip link add dev {i} type bridge"
@@ -333,3 +338,36 @@ def delete_vm(d1):
 	for i in list_bridge:
 		cmd=f"sudo ip link set dev {i} down; sudo ip link del dev {i}"
 		subprocess.check_output(cmd,shell=True)
+
+def create_ssh_config(d1):
+	list_vm=[]
+	new_ssh_config=[]
+	for i in d1['vm'].keys():
+		if d1['vm'][i]['type'] in 'vex':
+			list_vm.append(i)
+	# print("list of vm ",list_vm)
+	new_ssh_config.append("### add by vlab.py script ###")
+	for i in list_vm:
+		new_ssh_config.append(f"Host {i}")
+		new_ssh_config.append(f"  hostname {d1['vm'][i]['ip_address']}")
+		new_ssh_config.append(f"  user {d1['junos_login']['user']}")
+	return new_ssh_config
+
+def add_to_ssh_config(d1):
+	ssh_config = os.path.expanduser("~/.ssh/config")
+	print("add to ssh_config")
+	print(ssh_config)
+	add_ssh_config=create_ssh_config(d1)
+	with open(ssh_config) as f1:
+		r1 = f1.read()
+	r1_l = r1.split('\n')
+	new_ssh_config=[]
+	for i in r1_l:
+		if i == "### add by vlab.py script ###":
+			break
+		else:
+			new_ssh_config.append(i)
+	new_ssh_config += add_ssh_config
+	with open(ssh_config,"w") as f1:
+		wr = '\n'.join(new_ssh_config)
+		f1.write(wr)
