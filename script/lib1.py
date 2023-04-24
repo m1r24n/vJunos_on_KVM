@@ -182,7 +182,7 @@ def is_bridge_defined(d1):
 	#t2 = json.loads(t1)
 	#print(t1)
 	#print(type(t1))
-	print(t1)
+	#rint(t1)
 	if t1:
 		t2 = []
 		for i in t1:
