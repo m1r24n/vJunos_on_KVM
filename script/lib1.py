@@ -115,7 +115,7 @@ def create_config(d1):
 
 def check_argv(argv):
 	retval={}
-	cmd_list=['addbr','create','start','config','del','stop','test']
+	cmd_list=['addbr','create','start','config','del','stop','test','delbr']
 	if len(argv) == 1:
 		print_syntax()
 	else:
@@ -149,11 +149,13 @@ def is_vm_defined(d1):
 	a = subprocess.check_output(cmd,shell=True)
 	# vm = a.decode().split("\n")[0].split('=')[1].replace("'","").replace('/>',"")
 	t1 = a.decode().split("\n")[2:]
+	#print("list vm1 ",list_vm1)
 	list_vm2=[]
 	for i in t1:
 		if i:
 			list_vm2.append(i.strip().split()[1])
 		#list_vm2.append(i.strip().split())
+	#print("list_vm2 ",list_vm2)
 	t2=[]
 	for i in list_vm1:
 		if i in list_vm2:
@@ -219,6 +221,18 @@ def add_bridge(d1):
 			subprocess.check_output(cmd,shell=True)
 	else:
 		print("bridges are defined")
+
+def del_bridge(d1):
+	print("deleting bridge the bridges")
+	list_bridge = list_of_bridge(d1)
+	if 'bridge_not_defined' in d1.keys():
+		not_defined = d1['bridge_not_defined']
+	for i in list_bridge:
+		if i not in not_defined:
+			cmd = f"sudo ip link set dev {i} down"
+			subprocess.check_output(cmd,shell=True)
+			cmd = f"sudo ip link del dev {i} "
+			subprocess.check_output(cmd,shell=True)
 
 def define_vm(d1):
 	if d1['vm_not_defined']:
@@ -333,11 +347,7 @@ def delete_vm(d1):
 		print(f"deleting disk {disk}")
 		cmd = f"rm {disk}"
 		subprocess.check_output(cmd,shell=True)
-	list_bridge = list_of_bridge(d1)
-	print(f"deleting bridge {list_bridge}")
-	for i in list_bridge:
-		cmd=f"sudo ip link set dev {i} down; sudo ip link del dev {i}"
-		subprocess.check_output(cmd,shell=True)
+	del_bridge(d1)
 
 def create_ssh_config(d1):
 	list_vm=[]
