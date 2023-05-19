@@ -1,9 +1,9 @@
 ---
 disk: 
-  vex: /disk2/images/vjunos-switch-23.1R1.8.qcow2
+  vjunos: /disk2/images/vjunos/vjunos-switch-23.1R1.8.qcow2
   alpine: /disk2/images/alpine.img
   ubuntu: /disk2/images/ubuntu.img
-vm_dir: /disk2/vm/vex
+vm_dir: /data1/vm/vex
 mgmt:
   bridge: br0
   type: ovs
@@ -20,7 +20,7 @@ ip_pool:
     max: 10.1.101.99
 vm:
   sw1:
-    type: vex
+    type: vjunos
     ip_address: 10.1.101.101
     port:
       ge-0/0/0: link1
@@ -28,7 +28,7 @@ vm:
       ge-0/0/2: link3
       ge-0/0/3: link4
   sw2:
-    type: vex
+    type: vjunos
     ip_address: 10.1.101.102
     port:
       ge-0/0/0: link5
@@ -36,7 +36,7 @@ vm:
       ge-0/0/2: link3
       ge-0/0/3: link4
   svr1a:
-    type: ubuntu
+    type: alpine
     port:
       eth0: link1
       eth1: link2

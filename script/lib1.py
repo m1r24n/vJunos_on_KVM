@@ -6,11 +6,13 @@ from jinja2 import Template
 import os
 import json
 from passlib.hash import md5_crypt
+#import xmltodict
+
 
 def get_mac_fxp0(d1):
 	vm = d1['vm'].keys()
 	for i in vm:
-		if d1['vm'][i]['type'] == 'vex':
+		if d1['vm'][i]['type'] == 'vjunos':
 			cmd=f"virsh dumpxml {i} | grep \"mac address\""
 			a = subprocess.check_output(cmd,shell=True)
 			mac = a.decode().split("\n")[0].split('=')[1].replace("'","").replace('/>',"")
@@ -21,7 +23,7 @@ def create_junos_config(d1):
 		j2 = f.read()
 	p1 = {}
 	for i in d1['vm'].keys():
-		if d1['vm'][i]['type'] == 'vex':
+		if d1['vm'][i]['type'] == 'vjunos':
 			p1['hostname']=i
 			p1['ip_address']=f"{d1['vm'][i]['ip_address']}/{d1['ip_pool']['subnet'].split('/')[1]}"
 			p1['gateway']=d1['ip_pool']['gateway']
@@ -70,7 +72,7 @@ def create_dhcp_config(d1):
 	p1['option150'] = d1['ip_pool']['option-150']
 	p1['vm_data'] = {}
 	for i in d1['vm'].keys():
-		if d1['vm'][i]['type'] == 'vex':
+		if d1['vm'][i]['type'] == 'vjunos':
 			p1['vm_data'].update({i : {'mac' : d1['vm'][i]['mac']}})
     #print(p1)
 	config1=Template(j2).render(p1)
@@ -130,10 +132,13 @@ def check_argv(argv):
 				retval = yaml.load(vm,Loader=yaml.FullLoader)
 				retval['cmd'] = argv[1]
 				t1 = argv[0].split('/')
-				t2 = t1.pop()
+				_ = t1.pop()
 				retval['template']={
 							'junos':f"{'/'.join(t1)}/junos.j2",
-							'dhcp':f"{'/'.join(t1)}/dhcpd.j2"
+							'dhcp':f"{'/'.join(t1)}/dhcpd.j2",
+							'vjunos':f"{'/'.join(t1)}/vjunos.j2",
+							'ubuntu': f"{'/'.join(t1)}/ubuntu.j2",
+							'alpine': f"{'/'.join(t1)}/alpine.j2"
 				}
 				retval['DEST_DIR'] = './result'
 
@@ -142,7 +147,7 @@ def check_argv(argv):
 def is_vm_defined(d1):
 	t1 = []
 	for i in d1['vm'].keys():
-		#if d1['vm'][i]['type'] == 'vex':
+		#if d1['vm'][i]['type'] == 'vjunos':
 		t1.append(i)
 	list_vm1=set(t1)
 	cmd="virsh list --all"
@@ -242,59 +247,63 @@ def define_vm(d1):
 			disk_type = d1['vm'][i]['type']
 			cmd = f"cp {d1['disk'][disk_type]} {disk}"
 			print(f"copying file from {d1['disk'][disk_type]} to {disk}")
+			data1={}
 			subprocess.check_output(cmd,shell=True)
-			if d1['vm'][i]['type'] == 'vex':
-				cmd=f"""virt-install --name {i} --disk {disk},device=disk \
---cpu IvyBridge,+vmx --sysinfo system.product="VM-VEX" \
---ram 5120 --vcpu 4  \
---osinfo ubuntu22.04 """
-				if d1['mgmt']['type'] == 'ovs':
-					cmd += f"--network bridge={d1['mgmt']['bridge']},virtualport_type=openvswitch "
-				else:
-					cmd += f"--network bridge={d1['mgmt']['bridge']} "
-				port = list(d1['vm'][i]['port'].keys())
-				port.sort()
-				for j in port:
-					cmd += f"--network bridge={d1['vm'][i]['port'][j]} "
-				cmd += f"--xml './devices/interface[1]/target/@dev={i}fxp0' "
-				if 'vlan' in d1['mgmt'].keys():
-					cmd += f"--xml './devices/interface[1]/vlan/tag/@id={d1['mgmt']['vlan']}' "
-				k = 2
-				l=0
-				for j in port:
-					cmd += f"--xml './devices/interface[{k}]/target/@dev={i}ge{l}' "
-					cmd += f"--xml './devices/interface[{k}]/mtu/@size=9500' "
-					k+=1
-					l+=1
-				cmd2 = """--console pty,target_type=serial \
---noautoconsole --hvm --accelerate  --vnc \
---virt-type=kvm --boot hd --noreboot"""
-				cmd += cmd2
+			if d1['vm'][i]['type'] == 'vjunos':
+				cmd="virsh capabilities"
+				#cpu_model = xmltodict.parse(subprocess.check_output(cmd,shell=True).decode())['capabilities']['host']['cpu']['model'].split("-")[0]
+				cpu_model = "IvyBridge"
+				data1['name']=i
+				data1['disk']=disk
+				data1['vcpu']=4
+				data1['ram']=5120
+				data1['cpu_model']=cpu_model
+				data1['interfaces']={}
+				data1['interfaces']['mgmt']={
+					'bridge' : d1['mgmt']['bridge'],
+					'index' : 1,
+					'vlan': d1['mgmt']['vlan'],
+					'brtype': 'ovs'
+				}
+				p=2
+				ports= list(d1['vm'][i]['port'].keys())
+				_ =ports.sort()
+				for j in ports:
+					t1=f"ge{j.split('/')[2]}"
+					data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p}
+					p+=1
+				#print(data1)
+				with open(d1['template']['vjunos']) as f1:
+					template1 = f1.read()
+					cmd=Template(template1).render(data1)
 			elif d1['vm'][i]['type'] == 'alpine':
-				cmd=f"""virt-install --name {i} --disk {disk},device=disk \
---ram 512 --vcpu 1 --osinfo alpinelinux3.15 \
-	"""
-				port = list(d1['vm'][i]['port'].keys())
-				port.sort()
-				for j in port:
-					cmd += f"--network bridge={d1['vm'][i]['port'][j]},model=e1000 "
-				cmd2 = """--console pty,target_type=serial \
---noautoconsole --hvm --accelerate  --vnc \
---virt-type=kvm --boot hd --noreboot"""
-				cmd += cmd2
+				data1['name']=i
+				data1['disk']=disk
+				data1['vcpu']=1
+				data1['ram']=512
+				data1['interfaces']={}
+				ports= list(d1['vm'][i]['port'].keys())
+				_ =ports.sort()
+				for j in ports:
+					data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j]}
+				with open(d1['template']['alpine']) as f1:
+					template1 = f1.read()
+					cmd=Template(template1).render(data1)
 			elif d1['vm'][i]['type'] == 'ubuntu':
-				cmd=f"""virt-install --name {i} --disk {disk},device=disk \
---ram 2048 --vcpu 1 --osinfo ubuntu22.04 \
-	"""
-				port = list(d1['vm'][i]['port'].keys())
-				port.sort()
-				for j in port:
-					cmd += f"--network bridge={d1['vm'][i]['port'][j]},model=e1000 "
-				cmd2 = """--console pty,target_type=serial \
---noautoconsole --hvm --accelerate  --vnc \
---virt-type=kvm --boot hd --noreboot"""
-				cmd += cmd2
+				data1['name']=i
+				data1['disk']=disk
+				data1['vcpu']=1
+				data1['ram']=2048
+				data1['interfaces']={}
+				ports= list(d1['vm'][i]['port'].keys())
+				_ =ports.sort()
+				for j in ports:
+					data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j]}
+				with open(d1['template']['alpine']) as f1:
+					template1 = f1.read()
+					cmd=Template(template1).render(data1)
 			print(f"installing VM {i} on the hypervisor")
+			#print(cmd)
 			subprocess.check_output(cmd,shell=True)
 	else:
 		print("VMs are defined")
@@ -353,7 +362,7 @@ def create_ssh_config(d1):
 	list_vm=[]
 	new_ssh_config=[]
 	for i in d1['vm'].keys():
-		if d1['vm'][i]['type'] in 'vex':
+		if d1['vm'][i]['type'] in 'vjunos':
 			list_vm.append(i)
 	# print("list of vm ",list_vm)
 	new_ssh_config.append("### add by vlab.py script ###")
