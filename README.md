@@ -27,6 +27,9 @@ This script is tested on ubuntu 22.04 + KVM + libvirt + python3 on supermicro E2
     - lib1.py
     - dhcpd.j2
     - junos.j2
+    - apstra_ztp.j2
+    - alpine.j2
+    - ubuntu.j2
 
 5. The script [vlab.py](script/vlab.py) requires input from file **lab.yaml**, which depend on the topology of the lab that will be created. 
 6. sample of file **lab.yaml**, can be found under directory [./lab](./lab). There are several **lab.yaml** files for different topology that can be build.
@@ -35,7 +38,7 @@ This script is tested on ubuntu 22.04 + KVM + libvirt + python3 on supermicro E2
 9. This part is to define the disk file used for vJunos, Ubuntu linux VM , and Alpine Linux VM. **vm_dir** is the directory where the disk images for the VMs will be stored
 
         disk: 
-            vex: /disk2/images/vjunos-switch-23.1R1.8.qcow2
+            vjunos: /disk2/images/vjunos-switch-23.1R1.8.qcow2
             alpine: /disk2/images/alpine.img
             ubuntu: /disk2/images/ubuntu.img
         vm_dir: /disk2/vm/vex
@@ -64,15 +67,15 @@ This script is tested on ubuntu 22.04 + KVM + libvirt + python3 on supermicro E2
                 max: 10.1.101.99
 
 13. This part is to define the VM which will be deployed on the lab. Each VM will  have the following paramater 
-    - **type** (vEX, alpine VM, or ubuntu VM)
-    - **ip_address** (on for vEX) which will be used by the script to generate initial configuration for ZTP, and 
+    - **type** (vjunos, vjunosevolved, alpine VM, or ubuntu VM)
+    - **ip_address** (on for vjunos and vjunosevolved) which will be used by the script to generate initial configuration for ZTP, and 
     - **port**, which consist of port-id and which bridge this port is connected to. 
     
     The topology of the lab is defined by assigning bridges between VMs. The script will automatically create and generate bridge and deploy VMs on the hypervisor.
 
         vm:
             sw1:
-                type: vex
+                type: vjunos
                 ip_address: 10.1.101.101
                 port:
                 ge-0/0/0: link1
@@ -80,7 +83,7 @@ This script is tested on ubuntu 22.04 + KVM + libvirt + python3 on supermicro E2
                 ge-0/0/2: link3
                 ge-0/0/3: link4
             sw2:
-                type: vex
+                type: vjunos
                 ip_address: 10.1.101.102
                 port:
                 ge-0/0/0: link5
