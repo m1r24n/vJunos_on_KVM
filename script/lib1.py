@@ -12,7 +12,7 @@ from passlib.hash import md5_crypt
 def get_mac_fxp0(d1):
 	vm = d1['vm'].keys()
 	for i in vm:
-		if d1['vm'][i]['type'] == 'vjunos':
+		if d1['vm'][i]['type'] in ['vjunos','vjunosevolved']:
 			cmd=f"virsh dumpxml {i} | grep \"mac address\""
 			a = subprocess.check_output(cmd,shell=True)
 			mac = a.decode().split("\n")[0].split('=')[1].replace("'","").replace('/>',"")
@@ -23,8 +23,9 @@ def create_junos_config(d1):
 		j2 = f.read()
 	p1 = {}
 	for i in d1['vm'].keys():
-		if d1['vm'][i]['type'] == 'vjunos':
+		if d1['vm'][i]['type'] in ['vjunos','vjunosevolved']:
 			p1['hostname']=i
+			p1['type']= d1['vm'][i]['type']
 			p1['ip_address']=f"{d1['vm'][i]['ip_address']}/{d1['ip_pool']['subnet'].split('/')[1]}"
 			p1['gateway']=d1['ip_pool']['gateway']
 			p1['junos_user']=d1['junos_login']['user']
@@ -32,10 +33,10 @@ def create_junos_config(d1):
 			config1=Template(j2).render(p1)
 			if not os.path.exists(d1['DEST_DIR']):
 				os.makedirs(d1['DEST_DIR'])
-			else:
-				if not os.path.isdir(d1['DEST_DIR']):
-					os.remove(d1['DEST_DIR'])
-					os.makedirs(d1['DEST_DIR'])
+			# else:
+			# 	if not os.path.isdir(d1['DEST_DIR']):
+			# 		os.remove(d1['DEST_DIR'])
+			# 		os.makedirs(d1['DEST_DIR'])
 			filename = f"{d1['DEST_DIR']}/{i}.conf"
 			with open(filename,"w") as f:
 				f.write(config1)
@@ -72,17 +73,43 @@ def create_dhcp_config(d1):
 	p1['option150'] = d1['ip_pool']['option-150']
 	p1['vm_data'] = {}
 	for i in d1['vm'].keys():
-		if d1['vm'][i]['type'] == 'vjunos':
+		if d1['vm'][i]['type'] in  ['vjunos','vjunosevolved']:
 			p1['vm_data'].update({i : {'mac' : d1['vm'][i]['mac']}})
     #print(p1)
 	config1=Template(j2).render(p1)
 	if not os.path.exists(d1['DEST_DIR']):
 		os.makedirs(d1['DEST_DIR'])
-	else:
-		if not os.path.isdir(d1['DEST_DIR']):
-			os.remove(d1['DEST_DIR'])
-			os.makedirs(d1['DEST_DIR'])
+	# else:
+	# 	if not os.path.isdir(d1['DEST_DIR']):
+	# 		os.remove(d1['DEST_DIR'])
+	# 		os.makedirs(d1['DEST_DIR'])
 	filename = f"{d1['DEST_DIR']}/dhcpd.conf"
+	with open(filename,"w") as f:
+		f.write(config1)
+
+def create_apstra_dhcp_config(d1):
+	with open(d1['template']['apstra_ztp']) as f:
+		j2 = f.read()
+	p1 = {}
+	p1['subnet'] = d1['ip_pool']['subnet'].split('/')[0]
+	p1['netmask'] = prefix2netmask(d1['ip_pool']['subnet'].split('/')[1])
+	p1['range_min'] = d1['ip_pool']['range']['min']
+	p1['range_max'] = d1['ip_pool']['range']['max']
+	p1['gateway'] = d1['ip_pool']['gateway']
+	p1['ztp_server'] = d1['ip_pool']['option-150']
+	p1['host'] = {}
+	for i in d1['vm'].keys():
+		if d1['vm'][i]['type'] in  ['vjunos','vjunosevolved']:
+			p1['host'].update({i : {'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address']}})
+    #print(p1)
+	config1=Template(j2).render(p1)
+	if not os.path.exists(d1['DEST_DIR']):
+		os.makedirs(d1['DEST_DIR'])
+	# else:
+	# 	if not os.path.isdir(d1['DEST_DIR']):
+	# 		os.remove(d1['DEST_DIR'])
+	# 		os.makedirs(d1['DEST_DIR'])
+	filename = f"{d1['DEST_DIR']}/ztp_config.txt"
 	with open(filename,"w") as f:
 		f.write(config1)
 
@@ -109,6 +136,7 @@ def create_config(d1):
 	create_junos_config(d1)
 	print("Creating dhcpd config")
 	create_dhcp_config(d1)
+	create_apstra_dhcp_config(d1)
 	print("files are created on directory ./result")
 	print("upload file dhcpd.conf into dhcp server /etc/dhcpd/dhcpd.conf")
 	print(f"upload junos configuration files ({junos_config(d1)}), into root directory of tftp server")
@@ -117,7 +145,7 @@ def create_config(d1):
 
 def check_argv(argv):
 	retval={}
-	cmd_list=['addbr','create','start','config','del','stop','test','delbr']
+	cmd_list=['addbr','create','start','config','del','stop','test','delbr','printdata']
 	if len(argv) == 1:
 		print_syntax()
 	else:
@@ -128,8 +156,8 @@ def check_argv(argv):
 				print_syntax()
 			else:
 				with open("lab.yaml") as f:
-					vm = f.read()	
-				retval = yaml.load(vm,Loader=yaml.FullLoader)
+					d1 = f.read()	
+				retval = yaml.load(d1,Loader=yaml.FullLoader)
 				retval['cmd'] = argv[1]
 				t1 = argv[0].split('/')
 				_ = t1.pop()
@@ -138,11 +166,26 @@ def check_argv(argv):
 							'dhcp':f"{'/'.join(t1)}/dhcpd.j2",
 							'vjunos':f"{'/'.join(t1)}/vjunos.j2",
 							'ubuntu': f"{'/'.join(t1)}/ubuntu.j2",
-							'alpine': f"{'/'.join(t1)}/alpine.j2"
+							'alpine': f"{'/'.join(t1)}/alpine.j2",
+							'vjunosevolved':f"{'/'.join(t1)}/vjunosevolved.j2",
+							'apstra_ztp':f"{'/'.join(t1)}/apstra_ztp.j2"
 				}
 				retval['DEST_DIR'] = './result'
-
+				## checking if vjunosevolved is defined ?
+				for i in retval['vm'].keys():
+					if retval['vm'][i]['type'] == "vjunosevolved":
+						temp_port = retval['vm'][i]['port']
+						retval['vm'][i]['port']={
+							'p1': f"{i}PFE",
+							'p2': f"{i}RPIO",
+							'p3': f"{i}RPIO",
+							'p4': f"{i}PFE"
+						}
+						retval['vm'][i]['port'].update(temp_port)
 	return retval
+def printdata(d1):
+	d2 = yaml.dump(d1)
+	print(d2)
 
 def is_vm_defined(d1):
 	t1 = []
@@ -243,6 +286,8 @@ def define_vm(d1):
 	if d1['vm_not_defined']:
 		print("defining VM")
 		for i in d1['vm_not_defined']:
+			if not os.path.exists(d1['vm_dir']):
+				os.makedirs(d1['vm_dir'])
 			disk = d1['vm_dir'] + f"/{i}.img"
 			disk_type = d1['vm'][i]['type']
 			cmd = f"cp {d1['disk'][disk_type]} {disk}"
@@ -276,6 +321,42 @@ def define_vm(d1):
 				with open(d1['template']['vjunos']) as f1:
 					template1 = f1.read()
 					cmd=Template(template1).render(data1)
+			elif d1['vm'][i]['type'] == 'vjunosevolved':
+				disk_cfg = d1['vm_dir'] + f"/{i}_cfg.img"
+				cmd = f"cp {d1['disk']['vjunosevolved_config']} {disk_cfg}"
+				print(f"copying file from {d1['disk']['vjunosevolved_config']} to {disk_cfg}")
+				subprocess.check_output(cmd,shell=True)
+				cmd="virsh capabilities"
+				#cpu_model = xmltodict.parse(subprocess.check_output(cmd,shell=True).decode())['capabilities']['host']['cpu']['model'].split("-")[0]
+				cpu_model = "IvyBridge"
+				data1['name']=i
+				data1['disk']=disk
+				data1['disk_config']=disk_cfg
+				data1['vcpu']=4
+				data1['ram']=8192
+				data1['cpu_model']=cpu_model
+				data1['interfaces']={}
+				data1['interfaces']['mgmt']={
+					'bridge' : d1['mgmt']['bridge'],
+					'index' : 1,
+					'vlan': d1['mgmt']['vlan'],
+					'brtype': 'ovs'
+				}
+				p=2
+				ports= list(d1['vm'][i]['port'].keys())
+				#_ =ports.sort()
+				#print(ports)
+				for j in ports:
+					if j in ['p1','p2','p3','p4']:
+						data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j],'index':p}	
+					else:
+						t1=f"et{j.split('/')[2]}"
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p}
+					p+=1
+				#print(data1)
+				with open(d1['template']['vjunosevolved']) as f1:
+					template1 = f1.read()
+					cmd=Template(template1).render(data1)
 			elif d1['vm'][i]['type'] == 'alpine':
 				data1['name']=i
 				data1['disk']=disk
@@ -283,7 +364,7 @@ def define_vm(d1):
 				data1['ram']=512
 				data1['interfaces']={}
 				ports= list(d1['vm'][i]['port'].keys())
-				_ =ports.sort()
+				#_ =ports.sort()
 				for j in ports:
 					data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j]}
 				with open(d1['template']['alpine']) as f1:

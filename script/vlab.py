@@ -25,3 +25,5 @@ if d1:
         lib1.stop_vm(d1)
     elif d1['cmd'] == 'test':
         lib1.add_to_ssh_config(d1)
+    elif d1['cmd'] == 'printdata':
+        lib1.printdata(d1)

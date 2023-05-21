@@ -1,6 +1,8 @@
 ---
 disk: 
   vjunos: /disk2/images/vjunos/vjunos-switch-23.1R1.8.qcow2
+  vjunosevolved: /disk2/images/vjunos/vJunosEvolved-23.1R1.8.qcow2
+  vjunosevolved_config: /disk2/images/vjunos/vjunosevolved_config.img
   alpine: /disk2/images/alpine.img
   ubuntu: /disk2/images/ubuntu.img
 vm_dir: /data1/vm/vex
@@ -33,8 +35,24 @@ vm:
     port:
       ge-0/0/0: link5
       ge-0/0/1: link6
-      ge-0/0/2: link3
-      ge-0/0/3: link4
+      ge-0/0/2: link9
+      ge-0/0/3: link10
+  r1:
+    type: vjunosevolved
+    ip_address: 10.1.101.103
+    port:
+      et-0/0/0: link3
+      et-0/0/1: link4
+      et-0/0/2: link7
+      et-0/0/3: link8
+  r2:
+    type: vjunosevolved
+    ip_address: 10.1.101.104
+    port:
+      et-0/0/0: link7
+      et-0/0/1: link8
+      et-0/0/2: link9
+      et-0/0/3: link10
   svr1a:
     type: alpine
     port:
