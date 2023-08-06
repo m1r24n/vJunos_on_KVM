@@ -1,0 +1,8 @@
+group {
+    option tftp-server-name "10.1.101.2";
+        subnet 10.1.101.0 netmask 255.255.255.0 {
+        range 10.1.101.11 10.1.101.99;
+        option routers 10.1.101.1;
+    }
+    
+}

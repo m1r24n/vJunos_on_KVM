@@ -12,6 +12,7 @@ from passlib.hash import md5_crypt
 def get_mac_fxp0(d1):
 	vm = d1['vm'].keys()
 	for i in vm:
+		# if d1['vm'][i]['type'] in ['vjunos','vjunosevolved','vjunos_router']:
 		if d1['vm'][i]['type'] in ['vjunos','vjunosevolved']:
 			cmd=f"virsh dumpxml {i} | grep \"mac address\""
 			a = subprocess.check_output(cmd,shell=True)
@@ -23,6 +24,7 @@ def create_junos_config(d1):
 		j2 = f.read()
 	p1 = {}
 	for i in d1['vm'].keys():
+		# if d1['vm'][i]['type'] in ['vjunos','vjunosevolved','vjunos_router']:
 		if d1['vm'][i]['type'] in ['vjunos','vjunosevolved']:
 			p1['hostname']=i
 			p1['type']= d1['vm'][i]['type']
@@ -73,6 +75,7 @@ def create_dhcp_config(d1):
 	p1['option150'] = d1['ip_pool']['option-150']
 	p1['vm_data'] = {}
 	for i in d1['vm'].keys():
+		# if d1['vm'][i]['type'] in  ['vjunos','vjunosevolved','vjunos_router']:
 		if d1['vm'][i]['type'] in  ['vjunos','vjunosevolved']:
 			p1['vm_data'].update({i : {'mac' : d1['vm'][i]['mac']}})
     #print(p1)
@@ -99,6 +102,7 @@ def create_apstra_dhcp_config(d1):
 	p1['ztp_server'] = d1['ip_pool']['option-150']
 	p1['host'] = {}
 	for i in d1['vm'].keys():
+		# if d1['vm'][i]['type'] in  ['vjunos','vjunosevolved','vjunos_router']:
 		if d1['vm'][i]['type'] in  ['vjunos','vjunosevolved']:
 			p1['host'].update({i : {'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address']}})
     #print(p1)
@@ -165,6 +169,8 @@ def check_argv(argv):
 							'junos':f"{'/'.join(t1)}/junos.j2",
 							'dhcp':f"{'/'.join(t1)}/dhcpd.j2",
 							'vjunos':f"{'/'.join(t1)}/vjunos.j2",
+							'vmx_re':f"{'/'.join(t1)}/vmx_re.j2",
+							'vmx_pfe':f"{'/'.join(t1)}/vmx_pfe.j2",
 							'ubuntu': f"{'/'.join(t1)}/ubuntu.j2",
 							'alpine': f"{'/'.join(t1)}/alpine.j2",
 							'vjunosevolved':f"{'/'.join(t1)}/vjunosevolved.j2",
@@ -180,6 +186,12 @@ def check_argv(argv):
 							'p2': f"{i}RPIO",
 							'p3': f"{i}RPIO",
 							'p4': f"{i}PFE"
+						}
+						retval['vm'][i]['port'].update(temp_port)
+					if retval['vm'][i]['type'] == "vmx":
+						temp_port = retval['vm'][i]['port']
+						retval['vm'][i]['port']={
+							'p1': f"{i}Int",
 						}
 						retval['vm'][i]['port'].update(temp_port)
 	return retval
@@ -285,17 +297,55 @@ def del_bridge(d1):
 def define_vm(d1):
 	if d1['vm_not_defined']:
 		print("defining VM")
+		if 'type' in d1['mgmt'].keys():
+			brtype = d1['mgmt']['type']
+		else:
+			brtype = 'lb'
 		for i in d1['vm_not_defined']:
+			data1={}
 			if not os.path.exists(d1['vm_dir']):
 				os.makedirs(d1['vm_dir'])
-			disk = d1['vm_dir'] + f"/{i}.img"
-			disk_type = d1['vm'][i]['type']
-			cmd = f"cp {d1['disk'][disk_type]} {disk}"
-			print(f"copying file from {d1['disk'][disk_type]} to {disk}")
-			data1={}
-			subprocess.check_output(cmd,shell=True)
+			# if d1['vm'][i]['type'] in ['vjunos','vjunosevolved']:
+			# 	disk = d1['vm_dir'] + f"/{i}.img"
+			# 	disk_type = d1['vm'][i]['type']
+			# 	cmd = f"cp {d1['disk'][disk_type]} {disk}"
+			# 	print(f"copying file from {d1['disk'][disk_type]} to {disk}")
+			# 	subprocess.check_output(cmd,shell=True)
+			# elif d1['vm'][i]['type'] == 'vmx':
+			# 	j=0
+			# 	disk_vmx=[]
+			# 	while(j<3):
+			# 		disk_vmx.append(f"{i}_re_{j}.img")
+			# 		j+=1
+			# 	disk_vmx.append(f"{i}_pfe.img")
+			# else:
+			# 	disk = d1['vm_dir'] + f"/{i}.img"
+			# 	disk_type = d1['vm'][i]['type']
+			# 	cmd = f"cp {d1['disk'][disk_type]} {disk}"
+			# 	print(f"copying file from {d1['disk'][disk_type]} to {disk}")
+			# 	subprocess.check_output(cmd,shell=True)
+			if d1['vm'][i]['type'] == 'vmx':
+				j=0
+				disk_vmx=[]
+				while(j<3):
+					disk_vmx.append(f"{d1['vm_dir']}/{i}_re_{j}.img")
+					j+=1
+				disk_vmx.append(f"{d1['vm_dir']}/{i}_pfe.img")
+				for k in list(range(4)):
+					cmd = f"cp {d1['disk']['vmx'][k]} {disk_vmx[k]}"
+					#print("cmd ",cmd)
+					print(f"copying file from {d1['disk']['vmx'][k]} to {disk_vmx[k]}")
+					subprocess.check_output(cmd,shell=True)
+					
+			else:
+				disk = d1['vm_dir'] + f"/{i}.img"
+				disk_type = d1['vm'][i]['type']
+				cmd = f"cp {d1['disk'][disk_type]} {disk}"
+				print(f"copying file from {d1['disk'][disk_type]} to {disk}")
+				subprocess.check_output(cmd,shell=True)
+			# if d1['vm'][i]['type'] in ['vjunos','vjunos_router']:
 			if d1['vm'][i]['type'] == 'vjunos':
-				cmd="virsh capabilities"
+				#cmd="virsh capabilities"
 				#cpu_model = xmltodict.parse(subprocess.check_output(cmd,shell=True).decode())['capabilities']['host']['cpu']['model'].split("-")[0]
 				cpu_model = "IvyBridge"
 				data1['name']=i
@@ -308,7 +358,7 @@ def define_vm(d1):
 					'bridge' : d1['mgmt']['bridge'],
 					'index' : 1,
 					'vlan': d1['mgmt']['vlan'],
-					'brtype': 'ovs'
+					'brtype': brtype
 				}
 				p=2
 				ports= list(d1['vm'][i]['port'].keys())
@@ -318,9 +368,71 @@ def define_vm(d1):
 					data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p}
 					p+=1
 				#print(data1)
+				#if d1['vm'][i]['type'] == 'vjunos':
 				with open(d1['template']['vjunos']) as f1:
 					template1 = f1.read()
 					cmd=Template(template1).render(data1)
+			elif d1['vm'][i]['type'] == 'vmx':
+				#cmd="virsh capabilities"
+				#cpu_model = xmltodict.parse(subprocess.check_output(cmd,shell=True).decode())['capabilities']['host']['cpu']['model'].split("-")[0]
+				#create vmx_re
+				cpu_model = "IvyBridge"
+				data1['name']=i
+				data1['disk']=disk_vmx[0:3]
+				data1['vcpu']=1
+				data1['ram']=1024
+				data1['cpu_model']=cpu_model
+				data1['interfaces']={}
+				data1['interfaces']['mgmt']={
+					'bridge' : d1['mgmt']['bridge'],
+					'index' : 1,
+					'vlan': d1['mgmt']['vlan'],
+					'brtype': brtype
+				}
+				data1['interfaces']['Int']={
+					'bridge' : d1['vm'][i]['port']['p1'],
+					'index' : 2
+				}
+				# if d1['vm'][i]['type'] == 'vjunos':
+				cmd_vmx=[]
+				with open(d1['template']['vmx_re']) as f1:
+					template1 = f1.read()
+					#print("data1 ")
+					#print(data1)
+					cmd_vmx.append(Template(template1).render(data1))
+				## create vmx_pfe
+				cpu_model = "IvyBridge"
+				data1['name']=i
+				data1['disk']=disk_vmx[3]
+				data1['vcpu']=3
+				data1['ram']=2048
+				data1['cpu_model']=cpu_model
+				data1['interfaces']={}
+				data1['interfaces']['mgmt']={
+					'bridge' : d1['mgmt']['bridge'],
+					'index' : 1,
+					'vlan': d1['mgmt']['vlan'],
+					'brtype': brtype
+				}
+				data1['interfaces']['Int']={
+					'bridge' : d1['vm'][i]['port']['p1'],
+					'index' : 2
+				}
+				p=3
+				ports= list(d1['vm'][i]['port'].keys())
+				_ =ports.sort()
+				print("ports ",ports)
+				for j in ports:
+					if j != 'p1':
+						t1=f"ge{j.split('/')[2]}"
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p}
+						p+=1
+				#print(data1)
+				#if d1['vm'][i]['type'] == 'vjunos':
+				with open(d1['template']['vmx_pfe']) as f1:
+					template1 = f1.read()
+					#cmd=Template(template1).render(data1)
+					cmd_vmx.append(Template(template1).render(data1))
 			elif d1['vm'][i]['type'] == 'vjunosevolved':
 				disk_cfg = d1['vm_dir'] + f"/{i}_cfg.img"
 				cmd = f"cp {d1['disk']['vjunosevolved_config']} {disk_cfg}"
@@ -340,7 +452,7 @@ def define_vm(d1):
 					'bridge' : d1['mgmt']['bridge'],
 					'index' : 1,
 					'vlan': d1['mgmt']['vlan'],
-					'brtype': 'ovs'
+					'brtype': brtype
 				}
 				p=2
 				ports= list(d1['vm'][i]['port'].keys())
@@ -383,9 +495,16 @@ def define_vm(d1):
 				with open(d1['template']['alpine']) as f1:
 					template1 = f1.read()
 					cmd=Template(template1).render(data1)
-			print(f"installing VM {i} on the hypervisor")
-			#print(cmd)
-			subprocess.check_output(cmd,shell=True)
+			if d1['vm'][i]['type']=='vmx':
+				print(f"installing VM {i} on the hypervisor")
+				#print(cmd)
+				for k in cmd_vmx:
+					#print(k)
+					subprocess.check_output(k,shell=True)
+			else:
+				print(f"installing VM {i} on the hypervisor")
+				#print(cmd)
+				subprocess.check_output(cmd,shell=True)
 	else:
 		print("VMs are defined")
 
@@ -415,15 +534,27 @@ def start_vm(d1):
 	print("start VMs on hypervisor")
 	for i in d1['vm'].keys():
 		print(f"starting {i}")
-		cmd = f"virsh start {i}"
-		subprocess.check_output(cmd,shell=True)
+		if d1['vm'][i]['type'] == 'vmx':
+			cmd = f"virsh start {i}_re"
+			subprocess.check_output(cmd,shell=True)
+			cmd = f"virsh start {i}_pfe"
+			subprocess.check_output(cmd,shell=True)
+		else:
+			cmd = f"virsh start {i}"
+			subprocess.check_output(cmd,shell=True)
 
 def stop_vm(d1):
 	print("stop VMs on hypervisor")
 	for i in d1['vm'].keys():
 		print(f"stopping {i}")
-		cmd = f"virsh destroy {i}"
-		subprocess.check_output(cmd,shell=True)
+		if d1['vm'][i]['type'] == 'vmx':
+			cmd = f"virsh destroy {i}_re"
+			subprocess.check_output(cmd,shell=True)
+			cmd = f"virsh destroy {i}_pfe"
+			subprocess.check_output(cmd,shell=True)
+		else:
+			cmd = f"virsh destroy {i}"
+			subprocess.check_output(cmd,shell=True)
 
 def delete_vm(d1):
 	print("stopping VMs on hypervisor")
@@ -431,19 +562,29 @@ def delete_vm(d1):
 		print(f"stop vm {i}")
 		#cmd = f"virsh destroy {i}"
 		#subprocess.check_output(cmd,shell=True)
-		cmd = f"virsh undefine {i}"
-		subprocess.check_output(cmd,shell=True)
-		disk = d1['vm_dir'] + f"/{i}.img"
-		print(f"deleting disk {disk}")
-		cmd = f"rm {disk}"
-		subprocess.check_output(cmd,shell=True)
+		if d1['vm'][i]['type'] == 'vmx':
+			cmd = f"virsh undefine {i}_re"
+			subprocess.check_output(cmd,shell=True)
+			cmd = f"virsh undefine {i}_pfe"
+			subprocess.check_output(cmd,shell=True)
+		else:
+			cmd = f"virsh undefine {i}"
+			subprocess.check_output(cmd,shell=True)
+		# disk = d1['vm_dir'] + f"/{i}.img"
+		# print(f"deleting disk {disk}")
+		# cmd = f"rm {disk}"
+		# subprocess.check_output(cmd,shell=True)
 	del_bridge(d1)
+	print(f"deleting disk {d1['vm_dir']}")
+	cmd = f"rm -rf {d1['vm_dir']}"
+	subprocess.check_output(cmd,shell=True)
 
 def create_ssh_config(d1):
 	list_vm=[]
 	new_ssh_config=[]
 	for i in d1['vm'].keys():
-		if d1['vm'][i]['type'] in 'vjunos':
+		# if d1['vm'][i]['type'] in ['vjunos','vjunos_router']:
+		if d1['vm'][i]['type'] == 'vjunos':
 			list_vm.append(i)
 	# print("list of vm ",list_vm)
 	new_ssh_config.append("### add by vlab.py script ###")

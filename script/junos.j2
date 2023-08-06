@@ -33,11 +33,22 @@ system {
         }
     }
 }
+{% if type == 'vjunos' -%}
 chassis {
     evpn-vxlan-default-switch-support;
 }
+{% endif -%}
 interfaces {
 {% if type == 'vjunos' -%}
+    fxp0 {
+        unit 0 {
+            family inet {
+                address {{ ip_address }};
+            }
+        }
+    }
+{% endif -%}
+{% if type == 'vmx' -%}
     fxp0 {
         unit 0 {
             family inet {
