@@ -5,13 +5,13 @@ group {
         option routers 10.1.101.1;
     }
      
-    host r1 {
-        hardware ethernet 52:54:00:24:1d:23;
+    host p1 {
+        hardware ethernet 52:54:00:cb:cb:65;
         fixed-address 10.1.101.101;
     }
      
-    host r2 {
-        hardware ethernet 52:54:00:da:37:fb;
+    host p2 {
+        hardware ethernet 52:54:00:bd:81:80;
         fixed-address 10.1.101.102;
     }
     
