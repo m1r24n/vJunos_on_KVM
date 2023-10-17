@@ -1,29 +1,28 @@
-virt-install --name {{name}}_pfe \
-    --disk {{disk}},device=disk,bus=ide,format=qcow2 \
-    --cpu {{cpu_model}} \
+virt-install --name {{name}} --disk {{disk}},device=disk \
+    --cpu {{cpu_model}},+vmx \
+    --sysinfo system.product="VM-VEX" \
+    --sysinfo system.type=1 \
     --ram {{ram}} --vcpu {{vcpu}}  \
-    --osinfo linux2016 \
+    --osinfo ubuntu22.04 \
 {% for intf in interfaces -%}
     {% if intf == 'mgmt' -%}
         {% if interfaces[intf].brtype == 'ovs' -%}
-    --network bridge={{ interfaces[intf].bridge }},model=virtio,virtualport_type=openvswitch \
+    --network bridge={{ interfaces[intf].bridge }},virtualport_type=openvswitch \
         {% else -%}
-    --network bridge={{ interfaces[intf].bridge }},model=virtio \
+    --network bridge={{ interfaces[intf].bridge }} \
         {% endif -%}
     {% else -%}
-    --network bridge={{ interfaces[intf].bridge }},model=virtio \
+    --network bridge={{ interfaces[intf].bridge }} \
     {% endif -%}
 {% endfor -%}
 {% for intf in interfaces -%}
     {% if intf == 'mgmt' -%}
-    --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}PFEfxp0' \
+    --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}fxp0' \
         {% if interfaces[intf].vlan -%}
     --xml './devices/interface[{{ interfaces[intf].index }}]/vlan/tag/@id={{ interfaces[intf].vlan }}' \
         {% endif -%}
-    {% elif intf == 'Int' -%}
-    --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}PFE{{ intf }}' \
     {% else -%}
-    --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}_{{ intf }}' \
+    --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}{{ intf }}' \
     --xml './devices/interface[{{ interfaces[intf].index }}]/mtu/@size=9500' \
     {% endif -%}
 {% endfor -%}

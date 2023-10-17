@@ -1,0 +1,48 @@
+group {
+    option tftp-server-name "10.1.101.2";
+        subnet 10.1.101.0 netmask 255.255.255.0 {
+        range 10.1.101.11 10.1.101.99;
+        option routers 10.1.101.1;
+    }
+     
+    host spine1 {
+        hardware ethernet 52:54:00:f9:06:be;
+        fixed-address 10.1.101.101;
+    }
+     
+    host spine2 {
+        hardware ethernet 52:54:00:7d:1d:d5;
+        fixed-address 10.1.101.102;
+    }
+     
+    host leaf1 {
+        hardware ethernet 52:54:00:0e:bc:42;
+        fixed-address 10.1.101.111;
+    }
+     
+    host leaf2 {
+        hardware ethernet 52:54:00:d8:ff:70;
+        fixed-address 10.1.101.112;
+    }
+     
+    host leaf3 {
+        hardware ethernet 52:54:00:15:0c:08;
+        fixed-address 10.1.101.113;
+    }
+     
+    host leaf4 {
+        hardware ethernet 52:54:00:99:a5:99;
+        fixed-address 10.1.101.114;
+    }
+     
+    host leaf5 {
+        hardware ethernet 52:54:00:90:33:c6;
+        fixed-address 10.1.101.115;
+    }
+     
+    host leaf6 {
+        hardware ethernet 52:54:00:29:8e:c8;
+        fixed-address 10.1.101.116;
+    }
+    
+}

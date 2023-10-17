@@ -33,32 +33,25 @@ system {
         }
     }
 }
-{% if type == 'vjunos' -%}
+{% if type == 'vjunosswitch' -%}
 chassis {
     evpn-vxlan-default-switch-support;
 }
+system {
+    commit synchronize;
+}
 {% endif -%}
 interfaces {
-{% if type == 'vjunos' -%}
-    fxp0 {
-        unit 0 {
-            family inet {
-                address {{ ip_address }};
-            }
-        }
-    }
-{% endif -%}
-{% if type == 'vmx' -%}
-    fxp0 {
-        unit 0 {
-            family inet {
-                address {{ ip_address }};
-            }
-        }
-    }
-{% endif -%}
 {% if type == 'vjunosevolved' -%}
     re0:mgmt-0 {
+        unit 0 {
+            family inet {
+                address {{ ip_address }};
+            }
+        }
+    }
+{% else -%}
+    fxp0 {
         unit 0 {
             family inet {
                 address {{ ip_address }};

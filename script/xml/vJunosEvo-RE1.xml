@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<domain xmlns:ns0="http://libvirt.org/schemas/domain/qemu/1.0" type="kvm">
+  <name>vJunosEvo-RE1</name>
+  <memory unit="KiB">8388608</memory>
+  <currentMemory unit="KiB">8388608</currentMemory>
+  <vcpu placement="static">4</vcpu>
+  <resource>
+    <partition>/machine</partition>
+  </resource>
+  <os>
+    <type arch="x86_64" machine="pc-i440fx-xenial">hvm</type>
+    <boot dev="hd"/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <pae/>
+  </features>
+  <cpu match="exact" mode="host-model">
+    <topology cores="4" sockets="1" threads="1"/>
+        <model fallback="allow">qemu64</model>
+        <feature name="svm" policy="disable"/>
+  </cpu>
+  <clock offset="utc"/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>restart</on_crash>
+  <devices>
+    <emulator>/usr/bin/qemu-system-x86_64</emulator>
+    <disk device="disk" type="file">
+      <driver cache="writeback" name="qemu" type="qcow2"/>
+      <source file="/root/svignesh/vEVO_master/vJunosEvolved-23.1.qcow2"/>
+      <backingStore/>
+      <target bus="ide" dev="hda"/>
+      <alias name="ide0-0-0"/>
+      <address bus="0" controller="0" target="0" type="drive" unit="0"/>
+    </disk>
+    <controller index="0" type="ide">
+      <alias name="ide"/>
+      <address bus="0x00" domain="0x0000" function="0x1" slot="0x01" type="pci"/>
+    </controller>
+    <controller index="0" model="pci-root" type="pci">
+      <alias name="pci.0"/>
+    </controller>
+    <interface type="network">
+      <source network="default"/>
+      <model type="virtio"/>
+      <alias name="net0"/>
+      <address bus="0x00" domain="0x0000" function="0x0" slot="0x03" type="pci"/>
+    </interface>
+    <interface type="bridge">
+      <source bridge="PFE_LINK"/>
+      <model type="virtio"/>
+       <mtu size='9600'/>
+      <alias name="net1"/>
+      <address bus="0x00" domain="0x0000" function="0x0" slot="0x08" type="pci"/>
+    </interface>
+    <interface type="bridge">
+      <source bridge="RPIO_LINK"/>
+      <model type="virtio"/>
+       <mtu size='9600'/>
+      <alias name="net2"/>
+      <address bus="0x00" domain="0x0000" function="0x0" slot="0x09" type="pci"/>
+    </interface>
+    <interface type="bridge">
+      <source bridge="RPIO_LINK"/>
+      <model type="virtio"/>
+       <mtu size='9600'/>
+      <alias name="net3"/>
+      <address bus="0x00" domain="0x0000" function="0x0" slot="0x0a" type="pci"/>
+    </interface>
+     <interface type="bridge">
+      <source bridge="PFE_LINK"/>
+      <model type="virtio"/>
+       <mtu size='9600'/>
+      <alias name="net4"/>
+      <address bus="0x00" domain="0x0000" function="0x0" slot="0x0b" type="pci"/>
+    </interface>
+    <interface type="bridge">
+      <source bridge="et000"/>
+      <model type="virtio"/>
+      <alias name="et000"/>
+      <address bus="0x00" domain="0x0000" function="0x0" slot="0x0c" type="pci"/>
+    </interface>
+    <interface type="bridge">
+      <source bridge="et001"/>
+      <model type="virtio"/>
+      <alias name="et001"/>
+      <address bus="0x00" domain="0x0000" function="0x0" slot="0x0d" type="pci"/>
+    </interface>
+    <serial type="tcp">
+      <source host="127.0.0.1" mode="bind" service="8810"/>
+      <protocol type="telnet"/>
+      <target port="0"/>
+      <alias name="serial0"/>
+    </serial>
+    <memballoon model="virtio">
+      <alias name="balloon0"/>
+      <address bus="0x00" domain="0x0000" function="0x0" slot="0x06" type="pci"/>
+    </memballoon>
+  </devices>
+  <ns0:commandline>
+    <ns0:arg value="-smbios"/>
+    <ns0:arg value="type=0,vendor=Bochs,version=Bochs"/>
+    <ns0:arg value="-smbios"/>
+    <ns0:arg value="type=3,manufacturer=Bochs"/>
+    <ns0:arg value="-smbios"/>
+    <ns0:arg value="type=1,manufacturer=Bochs,product=Bochs,serial=chassis_no=0:slot=0:type=1:assembly_id=0x0D20:platform=251:master=0:channelized=no"/>
+  </ns0:commandline>
+</domain>
