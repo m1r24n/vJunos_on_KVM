@@ -1,0 +1,109 @@
+---
+disk: 
+  vjunos: /disk2/images/vjunos-switch-23.1R1.8.qcow2
+  alpine: /disk2/images/alpine.img
+  ubuntu: /disk2/images/ubuntu.img
+vm_dir: /disk2/vm/dc2
+mgmt:
+  bridge: br0
+  type: ovs
+  vlan: 101
+junos_login:
+  user: admin
+  password: pass01
+ip_pool:
+  subnet: 10.1.101.0/24
+  gateway: 10.1.101.1
+  option-150: 10.1.101.2
+  range: 
+    min: 10.1.101.11
+    max: 10.1.101.99
+vm:
+  spine1:
+    type: vjunos
+    ip_address: 10.1.101.101
+    port:
+      ge-0/0/0: s1p0
+      ge-0/0/1: s1p1
+      ge-0/0/2: s1p2
+      ge-0/0/3: s1p3
+  spine2:
+    type: vjunos
+    ip_address: 10.1.101.102
+    port:
+      ge-0/0/0: s2p0
+      ge-0/0/1: s2p1
+      ge-0/0/2: s2p2
+      ge-0/0/3: s2p3
+  leaf1:
+    type: vjunos
+    ip_address: 10.1.101.103
+    port:
+      ge-0/0/0: s1p0
+      ge-0/0/1: s2p0
+      ge-0/0/2: l1p2
+      ge-0/0/3: l1p3
+      ge-0/0/4: l1p4
+      ge-0/0/5: l1p5
+      ge-0/0/6: l1p6
+  leaf2:
+    type: vjunos
+    ip_address: 10.1.101.104
+    port:
+      ge-0/0/0: s1p1
+      ge-0/0/1: s2p1
+      ge-0/0/2: l2p2
+      ge-0/0/3: l2p3
+      ge-0/0/4: l2p4
+      ge-0/0/5: l2p5
+      ge-0/0/6: l2p6
+  leaf3:
+    type: vjunos
+    ip_address: 10.1.101.105
+    port:
+      ge-0/0/0: s1p2
+      ge-0/0/1: s2p2
+      ge-0/0/2: l3p2
+      ge-0/0/3: l3p3
+      ge-0/0/4: l3p4
+      ge-0/0/5: l3p5
+      ge-0/0/6: l3p6
+  leaf4:
+    type: vjunos
+    ip_address: 10.1.101.106
+    port:
+      ge-0/0/0: s1p3
+      ge-0/0/1: s2p3
+      ge-0/0/2: l4p2
+      ge-0/0/3: l4p3
+      ge-0/0/4: l4p4
+      ge-0/0/5: l4p5
+      ge-0/0/6: l4p6
+  svr1:
+    type: ubuntu
+    port:
+      eth0: l1p2
+      eth0: l2p2
+  svr2:
+    type: ubuntu
+    port:
+      eth0: l1p3
+      eth0: l2p3
+  svr3:
+    type: ubuntu
+    port:
+      eth0: l3p2
+      eth0: l3p3
+  svr4:
+    type: ubuntu
+    port:
+      eth0: l2p4
+  svr5:
+    type: ubuntu
+    port:
+      eth0: l3p4
+  svr6:
+    type: ubuntu
+    port:
+      eth0: l3p5
+      eth1: l3p5

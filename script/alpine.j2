@@ -1,0 +1,9 @@
+virt-install --name {{name}} --disk {{disk}},device=disk \
+    --ram {{ram}} --vcpu {{vcpu}}  \
+    --osinfo alpinelinux3.15 \
+{% for intf in interfaces -%}
+    --network bridge={{ interfaces[intf].bridge }},model=e1000 \
+{% endfor -%}
+    --console pty,target_type=serial \
+    --noautoconsole --hvm --accelerate  --vnc \
+    --virt-type=kvm --boot hd --import --noreboot

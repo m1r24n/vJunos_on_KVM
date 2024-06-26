@@ -1,0 +1,17 @@
+set chassis aggregated-devices ethernet device-count 8
+set chassis network-services enhanced-ip
+set interfaces ge-0/0/1 gigether-options 802.3ad ae0
+set interfaces ge-0/0/2 gigether-options 802.3ad ae1
+set interfaces ge-0/0/0 gigether-options 802.3ad ae0
+set interfaces ge-0/0/3 gigether-options 802.3ad ae1
+set interfaces ae0 aggregated-ether-options lacp active
+set interfaces ae0 unit 0 family inet address 10.0.0.1/31
+set interfaces ae1 aggregated-ether-options lacp active
+set interfaces ae1 unit 0 family inet address 10.0.0.2/31
+
+set chassis aggregated-devices ethernet device-count 8
+set chassis network-services enhanced-ip
+set interfaces ge-0/0/1 gigether-options 802.3ad ae0
+set interfaces ge-0/0/0 gigether-options 802.3ad ae0
+set interfaces ae0 aggregated-ether-options lacp active
+set interfaces ae0 unit 0 family inet address 10.0.0.3/31

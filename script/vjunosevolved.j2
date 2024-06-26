@@ -1,0 +1,27 @@
+virt-install --name {{name}} \
+    --disk {{disk}},device=disk \
+    --disk {{disk_config}},bus=usb \
+    --cpu {{cpu_model}},+vmx \
+    --sysinfo system.product="Bochs",system.serial=chassis_no=0:slot=0:type=1:assembly_id=0x0D20:platform=251:master=0:channelized=no,system.manufacturer="Bochs" \
+    --sysinfo bios.vendor="Bochs",bios.version="Bochs" \
+    --sysinfo chassis.manufacturer="Bochs" \
+    --ram {{ram}} --vcpu {{vcpu}}  \
+    --osinfo ubuntu22.04 \
+{% for intf in interfaces -%}
+    {% if intf == 'mgmt' -%}
+    --network bridge={{ interfaces[intf].bridge }} \
+    {% else -%}
+    --network bridge={{ interfaces[intf].bridge }} \
+    {% endif -%}
+{% endfor -%}
+{% for intf in interfaces -%}
+    {% if intf == 'mgmt' -%}
+    --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}mgmt' \
+    {% else -%}
+    --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}{{ intf }}' \
+    --xml './devices/interface[{{ interfaces[intf].index }}]/mtu/@size=9500' \
+    {% endif -%}
+{% endfor -%}
+    --console pty,target_type=serial \
+    --noautoconsole --hvm --accelerate  --vnc \
+    --virt-type=kvm --import --boot hd --noreboot

@@ -1,0 +1,69 @@
+---
+disk: 
+  vjunosrouter: /disk2/images/vjunos/vJunos-router-23.4R1.10.qcow2
+  alpine: /disk2/images/alpine.img
+vm_dir: /data1/vm/topo4
+mgmt:
+  bridge: br1
+  # type: ovs
+  # vlan: 101
+junos_login:
+  user: admin
+  password: pass01
+ip_pool:
+  subnet: 192.168.171.0/24
+  gateway: 192.168.171.1
+  option-150: 192.168.171.1
+  range: 
+    min: 192.168.171.11
+    max: 192.168.171.20
+vm:
+  r1:
+    type: vjunosrouter
+    ip_address: 192.168.171.11
+    port:
+      ge-0/0/0: lan1
+      ge-0/0/1: wan1
+      ge-0/0/2: wan2
+      ge-0/0/3: wan5
+  r2:
+    type: vjunosrouter
+    ip_address: 192.168.171.12
+    port:
+      ge-0/0/0: lan2
+      ge-0/0/1: wan1
+      ge-0/0/2: wan3
+  r3:
+    type: vjunosrouter
+    ip_address: 192.168.171.13
+    port:
+      ge-0/0/0: lan3
+      ge-0/0/1: wan3
+      ge-0/0/2: wan4
+      ge-0/0/3: wan5 
+  r4:
+    type: vjunosrouter
+    ip_address: 192.168.171.14
+    port:
+      ge-0/0/0: lan4
+      ge-0/0/1: wan2
+      ge-0/0/2: wan4
+  svr1:
+    type: alpine
+    port:
+      eth0: lan1
+  svr2:
+    type: alpine
+    port:
+      eth0: lan2
+  svr3:
+    type: alpine
+    port:
+      eth0: lan3
+  svr4:
+    type: alpine
+    port:
+      eth0: lan4
+
+
+
