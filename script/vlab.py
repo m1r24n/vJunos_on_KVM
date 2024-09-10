@@ -18,8 +18,10 @@ if d1:
         lib1.del_bridge(d1)
     elif d1['cmd'] == 'create':
         lib1.create_vm(d1)
+        lib1.create_config(d1)
     elif d1['cmd'] == 'start':
         lib1.start_vm(d1)
+        lib1.set_bridge(d1)
     elif d1['cmd'] == 'del':
         lib1.delete_vm(d1)
     elif d1['cmd'] == 'stop':

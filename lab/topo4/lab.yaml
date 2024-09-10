@@ -2,7 +2,7 @@
 disk: 
   vjunosrouter: /disk2/images/vjunos/vJunos-router-23.4R1.10.qcow2
   alpine: /disk2/images/alpine.img
-vm_dir: /data1/vm/topo4
+vm_dir: /disk3/vm/topo4
 mgmt:
   bridge: br1
   # type: ovs
@@ -48,22 +48,22 @@ vm:
       ge-0/0/0: lan4
       ge-0/0/1: wan2
       ge-0/0/2: wan4
-  svr1:
-    type: alpine
-    port:
-      eth0: lan1
-  svr2:
-    type: alpine
-    port:
-      eth0: lan2
-  svr3:
-    type: alpine
-    port:
-      eth0: lan3
-  svr4:
-    type: alpine
-    port:
-      eth0: lan4
+  # svr1:
+  #   type: alpine
+  #   port:
+  #     eth0: lan1
+  # svr2:
+  #   type: alpine
+  #   port:
+  #     eth0: lan2
+  # svr3:
+  #   type: alpine
+  #   port:
+  #     eth0: lan3
+  # svr4:
+  #   type: alpine
+  #   port:
+  #     eth0: lan4
 
 
 

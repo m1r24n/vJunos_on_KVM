@@ -33,11 +33,23 @@ def set_bridge(d1):
 
 	# print(f"interface {intf_list}")
 	# print(f"bridge {bridge_list}")
+	# check intf_list
+	new_intf_list=[]
 	for i in intf_list:
+		file1=f"/sys/class/net/{i}/brport/group_fwd_mask"
+		if os.path.exists(file1):
+			new_intf_list.append(i)
+	new_bridge_list=[]
+	for i in bridge_list:
+		br1 = f"/sys/class/net/{i}/bridge/group_fwd_mask"
+		if os.path.exists(br1):
+			new_bridge_list.append(i)
+
+	for i in new_intf_list:
 		print(f"setting interface {i}")
 		cmd=f"echo 16388 | sudo tee /sys/class/net/{i}/brport/group_fwd_mask"
 		result = subprocess.check_output(cmd,shell=True)
-	for i in bridge_list:
+	for i in new_bridge_list:
 		print(f"setting bridge {i}")
 		cmd=f"echo 65528 | sudo tee /sys/class/net/{i}/bridge/group_fwd_mask"
 		result = subprocess.check_output(cmd,shell=True)
@@ -176,8 +188,8 @@ def create_config(d1):
 	print("files are created on directory ./result")
 	print("upload file dhcpd.conf into dhcp server /etc/dhcpd/dhcpd.conf")
 	print(f"upload junos configuration files ({junos_config(d1)}), into root directory of tftp server")
-	print("Adding entries into  file ~/.ssh/config")
-	add_to_ssh_config(d1)
+	#print("Adding entries into  file ~/.ssh/config")
+	#add_to_ssh_config(d1)
 
 def check_argv(argv):
 	retval={}
@@ -478,7 +490,8 @@ def stop_vm(d1):
 		subprocess.check_output(cmd,shell=True)
 
 def delete_vm(d1):
-	print("stopping VMs on hypervisor")
+	print("deleting VMs on hypervisor")
+	#stop_vm(d1)
 	for i in d1['vm'].keys():
 		print(f"stop vm {i}")
 		#cmd = f"virsh destroy {i}"

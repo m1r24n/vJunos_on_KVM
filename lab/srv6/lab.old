@@ -1,9 +1,7 @@
 ---
 disk: 
-  vjunosrouter: /disk2/images/vjunos/vJunos-router-24.2R1.17.qcow2
+  vjunosrouter: /disk2/images/vjunos/vJunos-router-23.4R1.10.qcow2
   vjunosswitch: /disk2/images/vjunos/vJunos-switch-23.4R1.10.qcow2
-  vjunosevolved: /disk2/images/vjunos/vJunosEvolved-23.4R1-S1.9-EVO.qcow2
-  vjunosevolved_config: /disk2/images/vjunos/vjunosevolved_config.img
 vm_dir: /disk2/vm/topo8
 mgmt:
   bridge: br1
@@ -24,9 +22,20 @@ vm:
     type: vjunosrouter
     ip_address: 192.168.171.11
     port:
-      ge-0/0/0: r1g0
+      ge-0/0/0: r1_ge0
       ge-0/0/1: wan1
       ge-0/0/2: wan2
+      ge-0/0/3: r1_ge3
+  sw1:
+    type: vjunosswitch
+    ip_address: 192.168.171.14
+    port:
+      ge-0/0/0: r1_ge0
+      ge-0/0/1: sw1_p1
+      ge-0/0/2: sw1_p2
+      ge-0/0/3: sw1_p3
+      ge-0/0/4: sw1_p4
+      ge-0/0/0: r1_ge3
   r2:
     type: vjunosrouter
     ip_address: 192.168.171.12
@@ -36,12 +45,12 @@ vm:
       ge-0/0/2: wan3
       ge-0/0/3: wan4
   r3:
-    type: vjunosevolved
+    type: vjunosrouter
     ip_address: 192.168.171.13
     port:
-      et-0/0/0: r3g0
-      et-0/0/1: wan3
-      et-0/0/2: wan4
+      ge-0/0/0: r3_ge0
+      ge-0/0/1: wan3
+      ge-0/0/2: wan4
 
 
 
