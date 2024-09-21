@@ -7,6 +7,7 @@ import os
 import json
 from passlib.hash import md5_crypt
 import xmltodict
+import pprint
 
 
 def set_bridge(d1):
@@ -193,7 +194,7 @@ def create_config(d1):
 
 def check_argv(argv):
 	retval={}
-	cmd_list=['addbr','create','start','config','del','stop','test','delbr','printdata','setbr']
+	cmd_list=['addbr','create','start','config','del','stop','test','delbr','printdata','setbr','listbr']
 	if len(argv) == 1:
 		print_syntax()
 	else:
@@ -232,6 +233,8 @@ def check_argv(argv):
 								'p4': f"{i}PFE"
 							}
 							retval['vm'][i]['port'].update(temp_port)
+				if 'ovs' not in retval.keys():
+					retval['ovs']=[]
 	return retval
 def printdata(d1):
 	d2 = yaml.dump(d1)
@@ -277,23 +280,44 @@ def list_of_bridge(d1):
 				list_bridge.append(j)
 	return list_bridge
 
-def is_bridge_defined(d1):
+
+def list_bridge(d1):
 	cmd="ip --json link list type bridge"
 	t1 = json.loads(subprocess.check_output(cmd,shell=True).decode())
+	list_br=[]
+	for i in t1:
+		list_br.append(i['ifname'])
+	cmd="ip --json link list type openvswitch"
+	t1 = json.loads(subprocess.check_output(cmd,shell=True).decode())
+	for i in t1:
+		list_br.append(i['ifname'])
+	pprint.pprint(list_br)
+def is_bridge_defined(d1):
+	# cmd="ip --json link list type bridge"
+	# t1 = json.loads(subprocess.check_output(cmd,shell=True).decode())
 	#t2 = json.loads(t1)
 	#print(t1)
 	#print(type(t1))
+	cmd="ip --json link list type bridge"
+	t1 = json.loads(subprocess.check_output(cmd,shell=True).decode())
+	list_br=[]
+	for i in t1:
+		list_br.append(i['ifname'])
+	cmd="ip --json link list type openvswitch"
+	t1 = json.loads(subprocess.check_output(cmd,shell=True).decode())
+	for i in t1:
+		list_br.append(i['ifname'])
 	d1['bridge_not_defined']=[]
 	t2=list_of_bridge(d1)
 	if not t1:
 		d1['bridge_not_defined'] = t2
 	else:
-		t3 = []
-		for i in t1:
-			if 'ifname' in i.keys():
-				t3.append(i['ifname'])
+		# t3 = []
+		# for i in t1:
+		# 	if 'ifname' in i.keys():
+		# 		t3.append(i['ifname'])
 		for i in t2:
-			if i not in t3:
+			if i not in list_br:
 				d1['bridge_not_defined'].append(i)	
 		#print(t2)
 	#print(d1['bridge_not_defined'])
@@ -309,16 +333,22 @@ def add_bridge(d1):
 		#print(f"bridges {d1['bridge_not_defined']}")
 		print("starting the bridges")
 		for i in d1['bridge_not_defined']:
-			cmd = f"sudo ip link add dev {i} type bridge"
-			subprocess.check_output(cmd,shell=True)
-			# this is to hack the linux kernel to allow LLDP and LACP frame to be forwarded.
-			# it can only works with modified linux kernel.
-			# cmd = f"echo 0x400c | sudo tee  /sys/class/net/{i}/bridge/group_fwd_mask"
-			# subprocess.check_output(cmd,shell=True)
-			cmd = f"sudo ip link set dev {i} up"
-			subprocess.check_output(cmd,shell=True)
-			cmd = f"sudo sysctl -w \"net.ipv6.conf.{i}.disable_ipv6=1\""
-			subprocess.check_output(cmd,shell=True)
+			if i not in d1['ovs']:
+				cmd = f"sudo ip link add dev {i} type bridge"
+				subprocess.check_output(cmd,shell=True)
+				# this is to hack the linux kernel to allow LLDP and LACP frame to be forwarded.
+				# it can only works with modified linux kernel.
+				# cmd = f"echo 0x400c | sudo tee  /sys/class/net/{i}/bridge/group_fwd_mask"
+				# subprocess.check_output(cmd,shell=True)
+				cmd = f"sudo ip link set dev {i} up"
+				subprocess.check_output(cmd,shell=True)
+				cmd = f"sudo sysctl -w \"net.ipv6.conf.{i}.disable_ipv6=1\""
+				subprocess.check_output(cmd,shell=True)
+			else:
+				cmd = f"sudo ovs-vsctl add-br {i}"
+				subprocess.check_output(cmd,shell=True)
+				cmd = f"sudo sysctl -w \"net.ipv6.conf.{i}.disable_ipv6=1\""
+				subprocess.check_output(cmd,shell=True)
 
 			
 	else:
@@ -331,10 +361,14 @@ def del_bridge(d1):
 		not_defined = d1['bridge_not_defined']
 	for i in list_bridge:
 		if i not in not_defined:
-			cmd = f"sudo ip link set dev {i} down"
-			subprocess.check_output(cmd,shell=True)
-			cmd = f"sudo ip link del dev {i} "
-			subprocess.check_output(cmd,shell=True)
+			if i not in d1['ovs']:
+				cmd = f"sudo ip link set dev {i} down"
+				subprocess.check_output(cmd,shell=True)
+				cmd = f"sudo ip link del dev {i} "
+				subprocess.check_output(cmd,shell=True)
+			else:
+				cmd = f"sudo ovs-vsctl del-br {i}"
+				subprocess.check_output(cmd,shell=True)
 
 def define_vm(d1):
 	if d1['vm_not_defined']:
@@ -375,9 +409,12 @@ def define_vm(d1):
 				_ =ports.sort()
 				for j in ports:
 					t1=f"ge{j.split('/')[2]}"
-					data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p}
+					if d1['vm'][i]['port'][j] in d1['ovs']:
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':1}
+					else:
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':0}
 					p+=1
-				#print(data1)
+				pprint.pprint(data1)
 				with open(d1['template'][vm_type]) as f1:
 					template1 = f1.read()
 					cmd=Template(template1).render(data1)

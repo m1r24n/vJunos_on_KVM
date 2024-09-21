@@ -1,21 +1,13 @@
 virt-install --name {{name}} --disk {{disk}},device=disk \
     --cpu {{cpu_model}},+vmx \
-    --sysinfo system.product="VM-VMX",system.family="lab",system.serial="type=1" \
+    --sysinfo system.product="VM-VEX"\
     --ram {{ram}} --vcpu {{vcpu}}  \
     --osinfo ubuntu22.04 \
 {% for intf in interfaces -%}
     {% if intf == 'mgmt' -%}
-    {% if interfaces[intf].ovs -%}
-    --network=bridge:{{ interfaces[intf].bridge }},model=virtio,virtualport_type=openvswitch \
+    --network bridge={{ interfaces[intf].bridge }} \
     {% else -%}
-    --network=bridge:{{ interfaces[intf].bridge }},model=virtio \
-    {% endif -%}
-    {% else -%}
-    {% if interfaces[intf].ovs -%}
-    --network=bridge:{{ interfaces[intf].bridge }},model=virtio,virtualport_type=openvswitch \
-    {% else -%}
-    --network=bridge:{{ interfaces[intf].bridge }},model=virtio \
-    {% endif -%}
+    --network bridge={{ interfaces[intf].bridge }} \
     {% endif -%}
 {% endfor -%}
 {% for intf in interfaces -%}
@@ -28,4 +20,4 @@ virt-install --name {{name}} --disk {{disk}},device=disk \
 {% endfor -%}
     --console pty,target_type=serial \
     --noautoconsole --hvm --accelerate  --vnc \
-    --virt-type=kvm --boot hd  --import --noreboot
+    --virt-type=kvm --import --boot hd --noreboot
