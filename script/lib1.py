@@ -235,7 +235,11 @@ def check_argv(argv):
 							retval['vm'][i]['port'].update(temp_port)
 				if 'ovs' not in retval.keys():
 					retval['ovs']=[]
+				if 'type' in retval['mgmt'].keys():
+					if retval['mgmt']['type'] == 'ovs':
+						retval['ovs'].append(retval['mgmt']['bridge'])
 	return retval
+
 def printdata(d1):
 	d2 = yaml.dump(d1)
 	print(d2)
@@ -394,16 +398,24 @@ def define_vm(d1):
 				data1['ram']=5120
 				data1['cpu_model']=cpu_model
 				data1['interfaces']={}
-				data1['interfaces']['mgmt']={
-					'bridge' : d1['mgmt']['bridge'],
-					'index' : 1
-				}
-				# data1['interfaces']['mgmt']={
-				# 	'bridge' : d1['mgmt']['bridge'],
-				# 	'index' : 1,
-				# 	'vlan': d1['mgmt']['vlan'],
-				# 	'brtype': 'ovs'
-				# }
+				if 'type' in d1['mgmt'].keys():
+					if d1['mgmt']['type'] == 'ovs':
+						if 'vlan' in d1['mgmt'].keys():
+							vlantemp = d1['mgmt']['vlan']
+						else:
+							vlantemp = 0
+						data1['interfaces']['mgmt']={
+							'bridge' : d1['mgmt']['bridge'],
+							'index' : 1,
+							'vlan': vlantemp,
+							'ovs': '1' 
+						} 
+				else:
+					data1['interfaces']['mgmt']={
+						'bridge' : d1['mgmt']['bridge'],
+						'index' : 1,
+						'ovs':0
+					}
 				p=2
 				ports= list(d1['vm'][i]['port'].keys())
 				_ =ports.sort()
@@ -433,16 +445,35 @@ def define_vm(d1):
 				data1['ram']=8192
 				data1['cpu_model']=cpu_model
 				data1['interfaces']={}
+				if 'type' in d1['mgmt'].keys():
+					if d1['mgmt']['type'] == 'ovs':
+						if 'vlan' in d1['mgmt'].keys():
+							vlantemp = d1['mgmt']['vlan']
+						else:
+							vlantemp = 0
+						data1['interfaces']['mgmt']={
+							'bridge' : d1['mgmt']['bridge'],
+							'index' : 1,
+							'vlan': vlantemp,
+							'ovs': '1' 
+						} 
+				else:
+					data1['interfaces']['mgmt']={
+						'bridge' : d1['mgmt']['bridge'],
+						'index' : 1,
+						'ovs':0
+					}
 				# data1['interfaces']['mgmt']={
 				# 	'bridge' : d1['mgmt']['bridge'],
 				# 	'index' : 1,
 				# 	'vlan': d1['mgmt']['vlan'],
-				# 	'brtype': 'ovs'
+				# 	'ovs': '1'
 				# }
-				data1['interfaces']['mgmt']={
-					'bridge' : d1['mgmt']['bridge'],
-					'index' : 1
-				}
+				# data1['interfaces']['mgmt']={
+				# 	'bridge' : d1['mgmt']['bridge'],
+				# 	'index' : 1,
+				# 	'ovs':0
+				# }
 				p=2
 				ports= list(d1['vm'][i]['port'].keys())
 				#_ =ports.sort()

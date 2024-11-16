@@ -9,14 +9,25 @@ virt-install --name {{name}} \
     --osinfo ubuntu22.04 \
 {% for intf in interfaces -%}
     {% if intf == 'mgmt' -%}
-    --network bridge={{ interfaces[intf].bridge }} \
+    {% if interfaces[intf].ovs -%}
+    --network=bridge:{{ interfaces[intf].bridge }},model=virtio,virtualport_type=openvswitch \
     {% else -%}
-    --network bridge={{ interfaces[intf].bridge }} \
+    --network=bridge:{{ interfaces[intf].bridge }},model=virtio \
+    {% endif -%}
+    {% else -%}
+    {% if interfaces[intf].ovs -%}
+    --network=bridge:{{ interfaces[intf].bridge }},model=virtio,virtualport_type=openvswitch \
+    {% else -%}
+    --network=bridge:{{ interfaces[intf].bridge }},model=virtio \
+    {% endif -%}
     {% endif -%}
 {% endfor -%}
 {% for intf in interfaces -%}
     {% if intf == 'mgmt' -%}
-    --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}mgmt' \
+    --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}fxp0' \
+    {% if interfaces[intf].vlan and interfaces[intf].ovs -%}
+    --xml './devices/interface[{{ interfaces[intf].index }}]/vlan/tag/@id={{interfaces[intf].vlan}}' \
+    {% endif -%}
     {% else -%}
     --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}{{ intf }}' \
     --xml './devices/interface[{{ interfaces[intf].index }}]/mtu/@size=9500' \

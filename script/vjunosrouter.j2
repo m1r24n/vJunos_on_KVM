@@ -21,6 +21,9 @@ virt-install --name {{name}} --disk {{disk}},device=disk \
 {% for intf in interfaces -%}
     {% if intf == 'mgmt' -%}
     --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}fxp0' \
+    {% if interfaces[intf].vlan and interfaces[intf].ovs -%}
+    --xml './devices/interface[{{ interfaces[intf].index }}]/vlan/tag/@id={{interfaces[intf].vlan}}' \
+    {% endif -%}
     {% else -%}
     --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}{{ intf }}' \
     --xml './devices/interface[{{ interfaces[intf].index }}]/mtu/@size=9500' \

@@ -8,9 +8,9 @@ disk:
   ubuntu: /disk2/images/ubuntu.img
 vm_dir: /disk2/vm/topo10
 mgmt:
-  bridge: br1
+  bridge: ovs1
   # type: ovs
-  # vlan: 101
+  # vlan: 181
 ovs:
   - pe1_g0
   - pe2_g0
@@ -18,40 +18,49 @@ junos_login:
   user: admin
   password: pass01
 ip_pool:
-  subnet: 192.168.171.0/24
-  gateway: 192.168.171.254
-  option-150: 192.168.171.254
+  subnet: 192.168.181.0/24
+  gateway: 192.168.181.254
+  option-150: 192.168.181.254
   range: 
-    min: 192.168.171.1
-    max: 192.168.171.100
+    min: 192.168.181.1
+    max: 192.168.181.100
 vm:
   pe1:
     type: vjunosrouter
-    ip_address: 192.168.171.1
+    ip_address: 192.168.181.1
     port:
       ge-0/0/0: pe1_g0
       ge-0/0/1: ptp1
       ge-0/0/2: ptp2
+      ge-0/0/3: ptp6
   pe2:
     type: vjunosrouter
-    ip_address: 192.168.171.2
+    ip_address: 192.168.181.2
     port:
       ge-0/0/0: pe2_g0
       ge-0/0/1: ptp3
       ge-0/0/2: ptp4
   p1:
     type: vjunosrouter
-    ip_address: 192.168.171.3
+    ip_address: 192.168.181.3
     port:
       ge-0/0/0: ptp1
       ge-0/0/1: ptp3
       ge-0/0/2: ptp5
   p2:
     type: vjunosrouter
-    ip_address: 192.168.171.4
+    ip_address: 192.168.181.4
     port:
       ge-0/0/0: ptp2
       ge-0/0/1: ptp4
       ge-0/0/2: ptp5
+  sw1:
+    type: vjunosrouter
+    ip_address: 192.168.181.5
+    port:
+      ge-0/0/0: ptp6
+      ge-0/0/1: sw1_g1
+      ge-0/0/2: sw1_g2
+      ge-0/0/3: sw1_g3
   
 
