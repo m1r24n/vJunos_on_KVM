@@ -47,25 +47,25 @@ This script is tested on ubuntu 24.04 + KVM + libvirt + python3 on supermicro E2
 
 10. This part is to define the bridge where interface fxp0 (management interface of vJunos is connected to). It can be linux bridge or openvswitch. 
 
-       mgmt:
-         bridge: br0
+        mgmt:
+          brdge: br0
             
 
 11. This part is to define username/password which will be created by the script if vJunos is going to be preconfigure using ZTP. If other ZTP server is used, such as Juniper Aptra ZTP server, then this part is not used
 
-       junos_login:
-         user: admin
-         password: pass01
+        junos_login:
+          user: admin
+          password: pass01
 
 12. This part is to define the ip pool for DHCP server used for ZTP process. if other ZTP server is used, such as Juniper Apstra ZTP server, then this part is not used.
 
-       ip_pool:
-         subnet: 10.1.101.0/24
-         gateway: 10.1.101.1
-         option-150: 10.1.101.2
-         range: 
-           min: 10.1.101.11
-           max: 10.1.101.99
+        ip_pool:
+          subnet: 10.1.101.0/24
+          gateway: 10.1.101.1
+          option-150: 10.1.101.2
+          range: 
+            min: 10.1.101.11
+            max: 10.1.101.99
 
 13. This part is to define the VM which will be deployed on the lab. Each VM will  have the following paramater 
     - **type** (vjunos, vjunosevolved, alpine VM, or ubuntu VM)
