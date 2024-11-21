@@ -1,8 +1,0 @@
-group {
-    option tftp-server-name "192.168.181.254";
-        subnet 192.168.181.0 netmask 255.255.255.0 {
-        range 192.168.181.1 192.168.181.100;
-        option routers 192.168.181.254;
-    }
-    
-}
