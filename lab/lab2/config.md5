@@ -1,0 +1,157 @@
+# SW1
+
+    set groups config1 interfaces ge-0/0/0 mtu 9000
+    set groups config1 interfaces ge-0/0/0 unit 0 family inet address 10.0.0.0/31
+    set groups config1 interfaces ge-0/0/1 mtu 9000
+    set groups config1 interfaces ge-0/0/1 unit 0 family inet address 10.0.0.2/31
+    set groups config1 interfaces lo0 unit 0 family inet address 10.0.255.1/32
+    set groups config1 policy-options policy-statement from_loopback term 1 from protocol direct
+    set groups config1 policy-options policy-statement from_loopback term 1 from interface lo0.0
+    set groups config1 policy-options policy-statement from_loopback term 1 then accept
+    set groups config1 policy-options policy-statement LB term 1 then load-balance per-flow
+    set groups config1 policy-options policy-statement LB term 1 then accept
+    set groups config1 routing-options route-distinguisher-id 10.0.255.1
+    set groups config1 routing-options router-id 10.0.255.1
+    set groups config1 routing-options forwarding-table export LB
+    set groups config1 protocols bgp group underlay export from_loopback
+    set groups config1 protocols bgp group underlay neighbor 10.0.0.1 peer-as 2
+    set groups config1 protocols bgp group underlay neighbor 10.0.0.1 local-as 1
+    set groups config1 protocols bgp group underlay neighbor 10.0.0.3 peer-as 3
+    set groups config1 protocols bgp group underlay neighbor 10.0.0.3 local-as 1
+    set groups config1 protocols bgp group overlay type internal
+    set groups config1 protocols bgp group overlay local-address 10.0.255.1
+    set groups config1 protocols bgp group overlay family evpn signaling
+    set groups config1 protocols bgp group overlay local-as 1001
+    set groups config1 protocols bgp group overlay neighbor 10.0.255.2
+    set groups config1 protocols bgp group overlay neighbor 10.0.255.3
+
+
+    set groups config1 interfaces ge-0/0/2 flexible-vlan-tagging
+    set groups config1 interfaces ge-0/0/2 mtu 2000
+    set groups config1 interfaces ge-0/0/2 encapsulation extended-vlan-bridge
+    set groups config1 interfaces ge-0/0/2 unit 101 vlan-id 101
+    set groups config1 interfaces ge-0/0/2 unit 102 vlan-id 102
+    set groups config1 interfaces ge-0/0/2 unit 103 vlan-id 103
+    set groups config1 routing-instances cust1 instance-type mac-vrf
+    set groups config1 routing-instances cust1 protocols evpn encapsulation vxlan
+    set groups config1 routing-instances cust1 vtep-source-interface lo0.0
+    set groups config1 routing-instances cust1 service-type vlan-aware
+    set groups config1 routing-instances cust1 vrf-target target:1001:1001
+    set groups config1 routing-instances cust1 vlans vlan101 vlan-id 101
+    set groups config1 routing-instances cust1 vlans vlan101 interface ge-0/0/2.101
+    set groups config1 routing-instances cust1 vlans vlan101 vxlan vni 1001101
+    set groups config1 routing-instances cust1 vlans vlan102 vlan-id 102
+    set groups config1 routing-instances cust1 vlans vlan102 interface ge-0/0/2.102
+    set groups config1 routing-instances cust1 vlans vlan102 vxlan vni 1001102
+    set groups config1 routing-instances cust1 vlans vlan103 vlan-id 103
+    set groups config1 routing-instances cust1 vlans vlan103 interface ge-0/0/2.103
+    set groups config1 routing-instances cust1 vlans vlan103 vxlan vni 1001103
+
+
+    set groups config1 interfaces ge-0/0/3 flexible-vlan-tagging
+    set groups config1 interfaces ge-0/0/3 native-vlan-id 1
+    set groups config1 interfaces ge-0/0/3 mtu 2000
+    set groups config1 interfaces ge-0/0/3 encapsulation extended-vlan-bridge
+    set groups config1 interfaces ge-0/0/3 unit 101 vlan-id 101
+    set groups config1 interfaces ge-0/0/3 unit 102 vlan-id 102
+    set groups config1 interfaces ge-0/0/3 unit 103 vlan-id 103
+    set groups config1 interfaces ge-0/0/3 unit 1 vlan-id 1
+    set groups config1 routing-instances cust2 instance-type mac-vrf
+    set groups config1 routing-instances cust2 protocols evpn encapsulation vxlan
+    set groups config1 routing-instances cust2 vtep-source-interface lo0.0
+    set groups config1 routing-instances cust2 service-type vlan-aware
+    set groups config1 routing-instances cust2 vrf-target target:1001:1002
+    set groups config1 routing-instances cust2 vlans vlan101 vlan-id 101
+    set groups config1 routing-instances cust2 vlans vlan101 interface ge-0/0/3.101
+    set groups config1 routing-instances cust2 vlans vlan101 vxlan vni 1002101
+    set groups config1 routing-instances cust2 vlans vlan102 vlan-id 102
+    set groups config1 routing-instances cust2 vlans vlan102 interface ge-0/0/3.102
+    set groups config1 routing-instances cust2 vlans vlan102 vxlan vni 1002102
+    set groups config1 routing-instances cust2 vlans vlan103 vlan-id 103
+    set groups config1 routing-instances cust2 vlans vlan103 interface ge-0/0/3.103
+    set groups config1 routing-instances cust2 vlans vlan103 vxlan vni 1002103
+    set groups config1 routing-instances cust2 vlans vlan1 vlan-id 1
+    set groups config1 routing-instances cust2 vlans vlan1 interface ge-0/0/3.1
+    set groups config1 routing-instances cust2 vlans vlan1 vxlan vni 1002001
+
+
+
+
+
+# SW2
+
+    set groups config1 interfaces ge-0/0/0 mtu 9000
+    set groups config1 interfaces ge-0/0/0 unit 0 family inet address 10.0.0.1/31
+    set groups config1 interfaces ge-0/0/1 mtu 9000
+    set groups config1 interfaces ge-0/0/1 unit 0 family inet address 10.0.0.4/31
+    set groups config1 interfaces lo0 unit 0 family inet address 10.0.255.2/32
+
+    set groups config1 policy-options policy-statement from_loopback term 1 from protocol direct
+    set groups config1 policy-options policy-statement from_loopback term 1 from interface lo0.0
+    set groups config1 policy-options policy-statement from_loopback term 1 then accept
+    set groups config1 policy-options policy-statement LB term 1 then load-balance per-flow
+    set groups config1 policy-options policy-statement LB term 1 then accept
+
+    set groups config1 routing-options route-distinguisher-id 10.0.255.2
+    set groups config1 routing-options router-id 10.0.255.2
+    set groups config1 routing-options forwarding-table export LB
+    set groups config1 protocols bgp group underlay export from_loopback
+    set groups config1 protocols bgp group underlay neighbor 10.0.0.0 peer-as 1
+    set groups config1 protocols bgp group underlay neighbor 10.0.0.0 local-as 2
+    set groups config1 protocols bgp group underlay neighbor 10.0.0.5 peer-as 3
+    set groups config1 protocols bgp group underlay neighbor 10.0.0.5 local-as 2
+    set groups config1 protocols bgp group overlay type internal
+    set groups config1 protocols bgp group overlay local-address 10.0.255.2
+    set groups config1 protocols bgp group overlay family evpn signaling
+    set groups config1 protocols bgp group overlay local-as 1001
+    set groups config1 protocols bgp group overlay neighbor 10.0.255.1
+    set groups config1 protocols bgp group overlay neighbor 10.0.255.3
+
+
+    set groups config1 interfaces ge-0/0/2 flexible-vlan-tagging
+    set groups config1 interfaces ge-0/0/2 mtu 2000
+    set groups config1 interfaces ge-0/0/2 encapsulation extended-vlan-bridge
+    set groups config1 interfaces ge-0/0/2 unit 101 vlan-id 101
+    set groups config1 interfaces ge-0/0/2 unit 102 vlan-id 102
+    set groups config1 interfaces ge-0/0/2 unit 103 vlan-id 103
+    set groups config1 routing-instances cust1 instance-type mac-vrf
+    set groups config1 routing-instances cust1 protocols evpn encapsulation vxlan
+    set groups config1 routing-instances cust1 vtep-source-interface lo0.0
+    set groups config1 routing-instances cust1 service-type vlan-aware
+    set groups config1 routing-instances cust1 vrf-target target:1001:1001
+    set groups config1 routing-instances cust1 vlans vlan101 interface ge-0/0/2.101
+    set groups config1 routing-instances cust1 vlans vlan101 vxlan vni 1001101
+    set groups config1 routing-instances cust1 vlans vlan102 interface ge-0/0/2.102
+    set groups config1 routing-instances cust1 vlans vlan102 vxlan vni 1001102
+    set groups config1 routing-instances cust1 vlans vlan103 interface ge-0/0/2.103
+    set groups config1 routing-instances cust1 vlans vlan103 vxlan vni 1001103
+
+
+# SW3
+    set groups config1 interfaces ge-0/0/0 mtu 9000
+    set groups config1 interfaces ge-0/0/0 unit 0 family inet address 10.0.0.3/31
+    set groups config1 interfaces ge-0/0/1 mtu 9000
+    set groups config1 interfaces ge-0/0/1 unit 0 family inet address 10.0.0.5/31
+    set groups config1 interfaces lo0 unit 0 family inet address 10.0.255.3/32
+
+    set groups config1 policy-options policy-statement from_loopback term 1 from protocol direct
+    set groups config1 policy-options policy-statement from_loopback term 1 from interface lo0.0
+    set groups config1 policy-options policy-statement from_loopback term 1 then accept
+    set groups config1 policy-options policy-statement LB term 1 then load-balance per-flow
+    set groups config1 policy-options policy-statement LB term 1 then accept
+
+    set groups config1 routing-options route-distinguisher-id 10.0.255.3
+    set groups config1 routing-options router-id 10.0.255.3
+    set groups config1 routing-options forwarding-table export LB
+    set groups config1 protocols bgp group underlay export from_loopback
+    set groups config1 protocols bgp group underlay neighbor 10.0.0.2 peer-as 2
+    set groups config1 protocols bgp group underlay neighbor 10.0.0.2 local-as 3
+    set groups config1 protocols bgp group underlay neighbor 10.0.0.4 peer-as 2
+    set groups config1 protocols bgp group underlay neighbor 10.0.0.4 local-as 3
+    set groups config1 protocols bgp group overlay type internal
+    set groups config1 protocols bgp group overlay local-address 10.0.255.3
+    set groups config1 protocols bgp group overlay family evpn signaling
+    set groups config1 protocols bgp group overlay local-as 1001
+    set groups config1 protocols bgp group overlay neighbor 10.0.255.1
+    set groups config1 protocols bgp group overlay neighbor 10.0.255.2
+

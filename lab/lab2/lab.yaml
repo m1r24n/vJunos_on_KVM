@@ -1,0 +1,58 @@
+---
+disk: 
+  # vjunosrouter: /disk2/images/vjunos/vJunos-router-23.4R1.10.qcow2
+  # vjunosswitch: /vm/images/vJunos-switch-24.4R1.9.qcow2
+  vjunosswitch: /vm/images/vJunos-switch-23.4R2-S2.1.qcow2
+vm_dir: /vm/lab1
+mgmt:
+  bridge: br0
+  # type: ovs
+  # vlan: 101
+junos_login:
+  user: admin
+  password: pass01
+ip_pool:
+  subnet: 192.168.171.0/24
+  gateway: 192.168.171.254
+  option-150: 192.168.171.254
+  range: 
+    min: 192.168.171.1
+    max: 192.168.171.200
+ovs:
+ - c1sw1
+ - c2sw1
+ - c3sw1
+ - c1sw2
+ - c2sw2
+ - c3sw2
+ - c1sw3
+ - c2sw3
+ - c3sw3
+vm:
+  sw1:
+    type: vjunosswitch
+    ip_address: 192.168.171.11
+    port:
+      ge-0/0/0: sw1sw2
+      ge-0/0/1: sw1sw3
+      ge-0/0/2: c1sw1
+      ge-0/0/3: c2sw1
+      ge-0/0/4: c3sw1
+  sw2:
+    type: vjunosswitch
+    ip_address: 192.168.171.12
+    port:
+      ge-0/0/0: sw1sw2
+      ge-0/0/1: sw2sw3
+      ge-0/0/2: c1sw2
+      ge-0/0/3: c2sw2
+      ge-0/0/4: c3sw2
+  sw3:
+    type: vjunosswitch
+    ip_address: 192.168.171.13
+    port:
+      ge-0/0/0: sw1sw3
+      ge-0/0/1: sw2sw3
+      ge-0/0/2: c1sw3
+      ge-0/0/3: c2sw3
+      ge-0/0/4: c3sw3
