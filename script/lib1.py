@@ -483,8 +483,19 @@ def define_vm(d1):
 						data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j],'index':p}	
 					else:
 						t1=f"et{j.split('/')[2]}"
-						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p}
+						# data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p}
+						if d1['vm'][i]['port'][j] in d1['ovs']:
+							data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':1}
+						else:
+							data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':0}
 					p+=1
+				# for j in ports:
+				# 	t1=f"ge{j.split('/')[2]}"
+				# 	if d1['vm'][i]['port'][j] in d1['ovs']:
+				# 		data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':1}
+				# 	else:
+				# 		data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':0}
+				# 	p+=1
 				#print(data1)
 				with open(d1['template']['vjunosevolved']) as f1:
 					template1 = f1.read()
@@ -564,7 +575,7 @@ def delete_vm(d1):
 		print(f"stop vm {i}")
 		#cmd = f"virsh destroy {i}"
 		#subprocess.check_output(cmd,shell=True)
-		cmd = f"virsh undefine {i}"
+		cmd = f"virsh undefine --nvram {i}"
 		subprocess.check_output(cmd,shell=True)
 		disk = d1['vm_dir'] + f"/{i}.img"
 		print(f"deleting disk {disk}")

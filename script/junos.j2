@@ -34,10 +34,21 @@ system {
         }
     }
 }
+{% if type == 'vjunosrouter' or type == 'vjunosswitch' -%}
 chassis {
     evpn-vxlan-default-switch-support;
     network-services enhanced-ip;
 }
+
+{% endif -%}
+
+{% if type == 'vjunosevolved' -%}
+forwarding-options {
+    tunnel-termination;
+}
+{% endif -%}
+
+
 interfaces {
 {% if type == 'vjunosevolved' -%}
     re0:mgmt-0 {
