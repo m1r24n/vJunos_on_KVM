@@ -3,10 +3,10 @@ disk:
   # vjunosrouter: /disk2/images/vjunos/vJunos-router-23.4R1.10.qcow2
   # vjunosswitch: /vm/images/vJunos-switch-24.4R1.9.qcow2
   # vjunosswitch: /vm/images/vJunos-switch-23.4R2-S2.1.qcow2
-  sonic: /disk2/images/vjunos/sonic-24.2R1-S2.4.qcow2
-vm_dir: /disk2/vm/lab3
+  sonic: /vm/images/sonic-vs.img
+vm_dir: /vm/sonic
 mgmt:
-  bridge: br1
+  bridge: br0
   # type: ovs
   # vlan: 101
 junos_login:
@@ -20,28 +20,55 @@ ip_pool:
     min: 192.168.171.1
     max: 192.168.171.200
 ovs:
- - r1port0
- - r2port0
- - r3port0
+ - l1p2
+ - l1p3
+ - l1p4
+ - l2p2
+ - l2p3
+ - l2p4
+ - l3p2
+ - l3p3
+ - l3p4
 vm:
-  r1:
+  leaf1:
     type: sonic
     ip_address: 192.168.171.11
     port:
-      ge-0/0/0: r1port0
-      ge-0/0/1: r1r2
-      ge-0/0/2: r1r3
-  r2:
+      em1: l1s1
+      em2: l1s2
+      em3: l1p2
+      em4: l1p3
+      em5: l1p4
+  leaf2:
     type: sonic
     ip_address: 192.168.171.12
     port:
-      ge-0/0/0: r2port0
-      ge-0/0/1: r1r2
-      ge-0/0/2: r2r3
-  r3:
+      em1: l2s1
+      em2: l2s2
+      em3: l2p2
+      em4: l2p3
+      em5: l2p4
+  leaf3:
     type: sonic
     ip_address: 192.168.171.13
     port:
-      ge-0/0/0: r3port0
-      ge-0/0/1: r1r3
-      ge-0/0/2: r2r3
+      em1: l3s1
+      em2: l3s2
+      em3: l3p2
+      em4: l3p3
+      em5: l3p4
+  spine1:
+    type: sonic
+    ip_address: 192.168.171.14
+    port:
+      em1: l1s1
+      em2: l2s1
+      em3: l3s1
+  spine2:
+    type: sonic
+    ip_address: 192.168.171.15
+    port:
+      em1: l1s2
+      em2: l2s2
+      em3: l3s2
+

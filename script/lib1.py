@@ -16,7 +16,7 @@ def set_bridge(d1):
 	intf_list=[]
 	bridge_list=[]
 	for i in t1:
-		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter']:
+		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic']:
 			vm.append(i)
 	for i in vm:
 		cmd = f"virsh domiflist {i} | tail -n +4"
@@ -59,7 +59,7 @@ def set_bridge(d1):
 def get_mac_fxp0(d1):
 	vm = d1['vm'].keys()
 	for i in vm:
-		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter']:
+		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic']:
 			#print(f"vm {i}")
 			cmd=f"virsh dumpxml {i} | grep \"mac address\""
 			a = subprocess.check_output(cmd,shell=True)
@@ -215,6 +215,7 @@ def check_argv(argv):
 							'dhcp':f"{'/'.join(t1)}/dhcpd.j2",
 							'vjunosswitch':f"{'/'.join(t1)}/vjunosswitch.j2",
 							'vjunosrouter':f"{'/'.join(t1)}/vjunosrouter.j2",
+							'sonic':f"{'/'.join(t1)}/sonic.j2",
 							'ubuntu': f"{'/'.join(t1)}/ubuntu.j2",
 							'alpine': f"{'/'.join(t1)}/alpine.j2",
 							'vjunosevolved':f"{'/'.join(t1)}/vjunosevolved.j2",
@@ -430,6 +431,50 @@ def define_vm(d1):
 				with open(d1['template'][vm_type]) as f1:
 					template1 = f1.read()
 					cmd=Template(template1).render(data1)
+			elif d1['vm'][i]['type'] in  ['sonic']:
+				#cmd="virsh capabilities"
+				#cpu_model = xmltodict.parse(subprocess.check_output(cmd,shell=True).decode())['capabilities']['host']['cpu']['model'].split("-")[0]
+				cpu_model = "IvyBridge"
+				vm_type = d1['vm'][i]['type']
+				data1['name']=i
+				data1['disk']=disk
+				data1['vcpu']=2
+				data1['ram']=4096
+				# data1['cpu_model']=cpu_model
+				data1['interfaces']={}
+				if 'type' in d1['mgmt'].keys():
+					if d1['mgmt']['type'] == 'ovs':
+						if 'vlan' in d1['mgmt'].keys():
+							vlantemp = d1['mgmt']['vlan']
+						else:
+							vlantemp = 0
+						data1['interfaces']['mgmt']={
+							'bridge' : d1['mgmt']['bridge'],
+							'index' : 1,
+							'vlan': vlantemp,
+							'ovs': '1' 
+						} 
+				else:
+					data1['interfaces']['mgmt']={
+						'bridge' : d1['mgmt']['bridge'],
+						'index' : 1,
+						'ovs':0
+					}
+				p=2
+				ports= list(d1['vm'][i]['port'].keys())
+				_ =ports.sort()
+				for j in ports:
+					#t1=sonic_port(j)
+					t1 = j
+					if d1['vm'][i]['port'][j] in d1['ovs']:
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':1}
+					else:
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':0}
+					p+=1
+				pprint.pprint(data1)
+				with open(d1['template'][vm_type]) as f1:
+					template1 = f1.read()
+					cmd=Template(template1).render(data1)
 			elif d1['vm'][i]['type'] == 'vjunosevolved':
 				disk_cfg = d1['vm_dir'] + f"/{i}_cfg.img"
 				cmd = f"cp {d1['disk']['vjunosevolved_config']} {disk_cfg}"
@@ -532,6 +577,30 @@ def define_vm(d1):
 	else:
 		print("VMs are defined")
 
+def sonic_port(p1):
+	if p1 == 'eth0':
+		p2 = 'em1'
+	elif p1 == 'eth4':
+		p2 = 'em2'
+	elif p1 == 'eth8':
+		p2 = 'em3'
+	elif p1 == 'eth12':
+		p2 = 'em4'
+	elif p1 == 'eth16':
+		p2 = 'em5'
+	elif p1 == 'eth20':
+		p2 = 'em6'
+	elif p1 == 'eth24':
+		p2 = 'em7'
+	elif p1 == 'eth28':
+		p2 = 'em8'
+	elif p1 == 'eth32':
+		p2 = 'em9'
+	elif p1 == 'eth36':
+		p2 = 'em10'
+	else:
+		p2 = "em100"
+	return p2
 
 def create_vm(d1):
 	print("add VMs to hypervisor")
