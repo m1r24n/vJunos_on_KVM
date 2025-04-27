@@ -20,6 +20,9 @@ subnet {{ subnet }} netmask {{ netmask }} {
 {% for vm in vm_data -%}
 host {{ vm }} {
   hardware ethernet {{vm_data[vm].mac }};
+  fixed-address {{ vm_data[vm].ip }};
+  {% if vm_data[vm].conf  %}
   option NEW_OP.config-file-name "{{ vm }}.conf";
+  {% endif -%}
 }
 {% endfor %}

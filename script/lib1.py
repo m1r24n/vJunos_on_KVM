@@ -64,7 +64,7 @@ def get_mac_fxp0(d1):
 			cmd=f"virsh dumpxml {i} | grep \"mac address\""
 			a = subprocess.check_output(cmd,shell=True)
 			mac = a.decode().split("\n")[0].split('=')[1].replace("'","").replace('/>',"")
-			#print(f"mac {mac}")
+			print(f"vm {i} mac {mac}")
 			d1['vm'][i]['mac']=mac
 
 def create_junos_config(d1):
@@ -122,8 +122,11 @@ def create_dhcp_config(d1):
 	p1['option150'] = d1['ip_pool']['option-150']
 	p1['vm_data'] = {}
 	for i in d1['vm'].keys():
-		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter']:
-			p1['vm_data'].update({i : {'mac' : d1['vm'][i]['mac']}})
+		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic']:
+			if d1['vm'][i]['type'] == 'sonic':
+				p1['vm_data'].update({i : {'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address'],'conf' : 0}})
+			else:
+				p1['vm_data'].update({i : {'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address'],'conf' : 1}})
     #print(p1)
 	config1=Template(j2).render(p1)
 	if not os.path.exists(d1['DEST_DIR']):
