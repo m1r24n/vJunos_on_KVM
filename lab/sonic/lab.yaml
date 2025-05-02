@@ -4,6 +4,7 @@ disk:
   # vjunosswitch: /vm/images/vJunos-switch-24.4R1.9.qcow2
   # vjunosswitch: /vm/images/vJunos-switch-23.4R2-S2.1.qcow2
   sonic: /vm/images/sonic-vs.img
+  # sonic: /vm/images/sonic-vs-3.1.2.img
 vm_dir: /vm/sonic
 mgmt:
   bridge: br0
@@ -19,16 +20,16 @@ ip_pool:
   range: 
     min: 192.168.171.1
     max: 192.168.171.200
-ovs:
- - l1p2
- - l1p3
- - l1p4
- - l2p2
- - l2p3
- - l2p4
- - l3p2
- - l3p3
- - l3p4
+# ovs:
+#  - l1p2
+#  - l1p3
+#  - l1p4
+#  - l2p2
+#  - l2p3
+#  - l2p4
+#  - l3p2
+#  - l3p3
+#  - l3p4
 vm:
   leaf1:
     type: sonic

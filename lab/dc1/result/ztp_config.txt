@@ -1,0 +1,43 @@
+group {
+    option tftp-server-name "192.168.171.254";
+        subnet 192.168.171.0 netmask 255.255.255.0 {
+        range 192.168.171.1 192.168.171.100;
+        option routers 192.168.171.254;
+    }
+     
+    host spine1 {
+        hardware ethernet 52:54:00:1c:4b:49;
+        fixed-address 192.168.171.1;
+    }
+     
+    host spine2 {
+        hardware ethernet 52:54:00:cf:df:48;
+        fixed-address 192.168.171.2;
+    }
+     
+    host leaf1 {
+        hardware ethernet 52:54:00:70:fd:d7;
+        fixed-address 192.168.171.11;
+    }
+     
+    host leaf2 {
+        hardware ethernet 52:54:00:ca:38:f5;
+        fixed-address 192.168.171.12;
+    }
+     
+    host leaf3 {
+        hardware ethernet 52:54:00:3f:99:cf;
+        fixed-address 192.168.171.13;
+    }
+     
+    host leaf4 {
+        hardware ethernet 52:54:00:d6:e4:3d;
+        fixed-address 192.168.171.14;
+    }
+     
+    host leaf5 {
+        hardware ethernet 52:54:00:04:21:a5;
+        fixed-address 192.168.171.15;
+    }
+    
+}

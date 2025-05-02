@@ -1,7 +1,7 @@
-export LXC_NAME=pc2
+export LXC_NAME=pc1
 export VLAN=1011
-export OVS=l2p2
-export IPv4=192.168.11.2/24
+export OVS=l1p2
+export IPv4=192.168.11.11/24
 export GWv4=192.168.11.254
 # export IPv6=192.168.11.102/24
 # export GWv6=192.168.11.254

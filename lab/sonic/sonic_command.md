@@ -42,7 +42,7 @@ sudo config interface ip Ethernet4 10.1.100.2/31
 sudo config vlan add 10
 sudo config vlan add 20
 show vlan brief
-sudo config vlan member add -u Ethernet8 
+sudo config vlan member add 10 -u Ethernet8 
 
 # configure vtep 
 sudo config vxlan add vtep 10.1.255.11

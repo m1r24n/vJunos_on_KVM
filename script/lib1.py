@@ -441,7 +441,7 @@ def define_vm(d1):
 				vm_type = d1['vm'][i]['type']
 				data1['name']=i
 				data1['disk']=disk
-				data1['vcpu']=2
+				data1['vcpu']=4
 				data1['ram']=4096
 				# data1['cpu_model']=cpu_model
 				data1['interfaces']={}
