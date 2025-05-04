@@ -1,0 +1,57 @@
+---
+disk: 
+  # vjunosrouter: /disk2/images/vjunos/vJunos-router-23.4R1.10.qcow2
+  # vjunosswitch: /vm/images/vJunos-switch-24.4R1.9.qcow2
+  # vjunosswitch: /vm/images/vJunos-switch-23.4R2-S2.1.qcow2
+  ubuntu: /vm/images/ubuntu-router.qcow2
+  # sonic: /vm/images/sonic-vs-3.1.2.img
+vm_dir: /vm/net2
+mgmt:
+  bridge: ovs0
+  type: ovs
+  vlan: 101
+junos_login:
+  user: admin
+  password: pass01
+ip_pool:
+  subnet: 192.168.171.0/24
+  gateway: 192.168.171.254
+  option-150: 192.168.171.254
+  range: 
+    min: 192.168.171.1
+    max: 192.168.171.200
+ovs:
+ - r1p1
+ - r2p1
+vm:
+  r1:
+    type: ubuntu
+    ip_address: 192.168.111.201
+    port:
+      em1: r1p1
+      em2: wan1
+      em3: wan2
+  r2:
+    type: ubuntu
+    ip_address: 192.168.111.202
+    port:
+      em1: r2p1
+      em2: wan3
+      em3: wan4
+  r3:
+    type: ubuntu
+    ip_address: 192.168.111.203
+    port:
+      em1: wan1
+      em2: wan3
+      em3: wan5
+  r4:
+    type: ubuntu
+    ip_address: 192.168.111.204
+    port:
+      em1: wan2
+      em2: wan4
+      em3: wan5
+
+
+

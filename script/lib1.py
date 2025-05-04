@@ -564,13 +564,45 @@ def define_vm(d1):
 			elif d1['vm'][i]['type'] == 'ubuntu':
 				data1['name']=i
 				data1['disk']=disk
-				data1['vcpu']=1
-				data1['ram']=2048
+				data1['vcpu']=2
+				data1['ram']=4096
+				# data1['interfaces']={}
+				# ports= list(d1['vm'][i]['port'].keys())
+				# _ =ports.sort()
+				# for j in ports:
+				# 	data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j]}
+				# new section
 				data1['interfaces']={}
+				if 'type' in d1['mgmt'].keys():
+					if d1['mgmt']['type'] == 'ovs':
+						if 'vlan' in d1['mgmt'].keys():
+							vlantemp = d1['mgmt']['vlan']
+						else:
+							vlantemp = 0
+						data1['interfaces']['mgmt']={
+							'bridge' : d1['mgmt']['bridge'],
+							'index' : 1,
+							'vlan': vlantemp,
+							'ovs': '1' 
+						} 
+				else:
+					data1['interfaces']['mgmt']={
+						'bridge' : d1['mgmt']['bridge'],
+						'index' : 1,
+						'ovs':0
+					}
+				p=2
 				ports= list(d1['vm'][i]['port'].keys())
 				_ =ports.sort()
 				for j in ports:
-					data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j]}
+					#t1=sonic_port(j)
+					t1 = j
+					if d1['vm'][i]['port'][j] in d1['ovs']:
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':1}
+					else:
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':0}
+					p+=1
+				# end of new section
 				with open(d1['template']['alpine']) as f1:
 					template1 = f1.read()
 					cmd=Template(template1).render(data1)

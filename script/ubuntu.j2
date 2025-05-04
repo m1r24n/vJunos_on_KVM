@@ -1,10 +1,41 @@
 virt-install --name {{name}} --disk {{disk}},device=disk \
     --ram {{ram}} --vcpu {{vcpu}}  \
-    --osinfo ubuntu22.04 \
+    --osinfo ubuntu24.04 \
+    --boot uefi,loader_secure=no \
 {% for intf in interfaces -%}
-    --network bridge={{ interfaces[intf].bridge }},model=e1000 \
-    --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}{{ intf }}' \
+    {% if intf == 'mgmt' -%}
+    
+    {% if interfaces[intf].ovs -%}
+    --network=bridge:{{ interfaces[intf].bridge }},model=virtio,virtualport_type=openvswitch \
+    {% else -%}
+    --network=bridge:{{ interfaces[intf].bridge }},model=virtio \
+    {% endif -%}
+
+    {% else -%}
+    
+    {% if interfaces[intf].ovs -%}
+    --network=bridge:{{ interfaces[intf].bridge }},model=virtio,virtualport_type=openvswitch \
+    {% else -%}
+    --network=bridge:{{ interfaces[intf].bridge }},model=virtio \
+    {% endif -%}
+    
+    {% endif -%}
 {% endfor -%}
+
+{% for intf in interfaces -%}
+    {% if intf == 'mgmt' -%}
+    --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}em0' \
+    {% if interfaces[intf].vlan and interfaces[intf].ovs -%}
+    --xml './devices/interface[{{ interfaces[intf].index }}]/vlan/tag/@id={{interfaces[intf].vlan}}' \
+    {% endif -%}
+    {% else -%}
+    --xml './devices/interface[{{ interfaces[intf].index }}]/target/@dev={{name}}{{ intf }}' \
+    --xml './devices/interface[{{ interfaces[intf].index }}]/mtu/@size=9500' \
+    {% endif -%}
+{% endfor -%}
+
     --console pty,target_type=serial \
     --noautoconsole --hvm --accelerate  --vnc \
     --virt-type=kvm --boot hd --noreboot
+
+
