@@ -9,7 +9,7 @@ vm_dir: /vm/net2
 mgmt:
   bridge: ovs0
   type: ovs
-  vlan: 101
+  vlan: 111
 junos_login:
   user: admin
   password: pass01

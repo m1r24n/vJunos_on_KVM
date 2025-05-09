@@ -603,7 +603,7 @@ def define_vm(d1):
 						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':0}
 					p+=1
 				# end of new section
-				with open(d1['template']['alpine']) as f1:
+				with open(d1['template']['ubuntu']) as f1:
 					template1 = f1.read()
 					cmd=Template(template1).render(data1)
 			print(f"installing VM {i} on the hypervisor")
