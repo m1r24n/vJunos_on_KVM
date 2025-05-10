@@ -399,7 +399,7 @@ def define_vm(d1):
 				data1['name']=i
 				data1['disk']=disk
 				data1['vcpu']=4
-				data1['ram']=8192
+				data1['ram']=5120
 				data1['cpu_model']=cpu_model
 				data1['interfaces']={}
 				if 'type' in d1['mgmt'].keys():

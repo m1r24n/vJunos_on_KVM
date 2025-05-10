@@ -1,13 +1,16 @@
 ---
 disk: 
-  vjunosswitch: /vm/images/vJunos-switch-24.4R1.9.qcow2
+  # vjunosswitch: /vm/images/vJunos-switch-24.4R1.9.qcow2
+  vjunosswitch: /disk2/images/vjunos/vJunos-switch-24.4R1.9.qcow2 
   # vjunosevolved: /disk2/images/vjunos/vJunosEvolved-23.1R1.8.qcow2
   # vjunosevolved_config: /disk2/images/vjunos/vjunosevolved_config.img
   # alpine: /disk2/images/alpine.img
   # ubuntu: /disk2/images/ubuntu.img
-vm_dir: /vm/dc1
+# vm_dir: /vm/dc1
+vm_dir: /disk2/vm/dc1
 mgmt:
-  bridge: ovs0
+  # bridge: ovs0
+  bridge: ovs1
   type: ovs
   vlan: 120
 # ovs:

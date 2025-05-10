@@ -1,0 +1,48 @@
+group {
+    option tftp-server-name "192.168.171.254";
+        subnet 192.168.171.0 netmask 255.255.255.0 {
+        range 192.168.171.1 192.168.171.20;
+        option routers 192.168.171.254;
+    }
+     
+    host pe11 {
+        hardware ethernet 52:54:00:19:0c:3b;
+        fixed-address 192.168.171.11;
+    }
+     
+    host pe12 {
+        hardware ethernet 52:54:00:a9:58:d8;
+        fixed-address 192.168.171.12;
+    }
+     
+    host pe13 {
+        hardware ethernet 52:54:00:9e:d0:2a;
+        fixed-address 192.168.171.13;
+    }
+     
+    host pe14 {
+        hardware ethernet 52:54:00:6a:3f:2d;
+        fixed-address 192.168.171.14;
+    }
+     
+    host p1 {
+        hardware ethernet 52:54:00:9d:23:65;
+        fixed-address 192.168.171.1;
+    }
+     
+    host p2 {
+        hardware ethernet 52:54:00:f2:5b:57;
+        fixed-address 192.168.171.2;
+    }
+     
+    host p3 {
+        hardware ethernet 52:54:00:fd:a8:48;
+        fixed-address 192.168.171.3;
+    }
+     
+    host p4 {
+        hardware ethernet 52:54:00:4f:52:6e;
+        fixed-address 192.168.171.4;
+    }
+    
+}
