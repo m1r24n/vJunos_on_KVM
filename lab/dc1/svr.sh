@@ -1,15 +1,16 @@
 #!/bin/bash
-VM=svr3
+VM=svr4
 DISK=/disk2/vm/dc1/${VM}.img
-IMG=/disk2/images/debian-12-generic-amd64.qcow2
+#IMG=/disk2/images/debian-12-generic-amd64.qcow2
+IMG=/disk2/images/ubuntu.qcow2
 CDROM=/disk2/images/seed.iso
 VLAN=111
-porte0=l3p3
-porte1=l4p3
+porte0=l1p3
+porte1=l2p3
+# --disk ${CDROM},device=cdrom \
 qemu-img create -b ${IMG} -f qcow2 -F qcow2 ${DISK}
 virt-install --name ${VM} \
     --disk ${DISK},device=disk \
-    --disk ${CDROM},device=cdrom \
     --ram 2048 --vcpu 1  \
     --osinfo debian12 \
     --network=bridge:${porte0},model=e1000 \
