@@ -1,6 +1,6 @@
 #!/bin/bash
 VM=svr4
-MAC=52:54:00:17:9d:b1
+MAC=52:54:00:5a:24:50
 IPv4=192.168.201.4/24
 IPv6=fc00:dead:beef:a201::1000:4/64
 GWv4=192.168.201.254
@@ -12,14 +12,14 @@ network:
   ethernets:
     eth0:
       dhcp4: no
-    eth0:
+    eth1:
       dhcp4: no
   bonds:
     bond0:
       macaddress: ${MAC}
       interfaces:
-        - ens1
-        - ens2
+        - eth0
+        - eth1
       parameters:
          mode: 802.3ad
   bridges:
