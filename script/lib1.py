@@ -59,7 +59,7 @@ def set_bridge(d1):
 def get_mac_fxp0(d1):
 	vm = d1['vm'].keys()
 	for i in vm:
-		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic']:
+		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
 			#print(f"vm {i}")
 			cmd=f"virsh dumpxml {i} | grep \"mac address\""
 			a = subprocess.check_output(cmd,shell=True)
@@ -122,11 +122,11 @@ def create_dhcp_config(d1):
 	p1['option150'] = d1['ip_pool']['option-150']
 	p1['vm_data'] = {}
 	for i in d1['vm'].keys():
-		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic']:
+		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
 			if d1['vm'][i]['type'] == 'sonic':
-				p1['vm_data'].update({i : {'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address'],'conf' : 0}})
+				p1['vm_data'].update({i : {'hostname': i,'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address'],'conf' : 0}})
 			else:
-				p1['vm_data'].update({i : {'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address'],'conf' : 1}})
+				p1['vm_data'].update({i : {'hostname': i,'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address'],'conf' : 1}})
     #print(p1)
 	config1=Template(j2).render(p1)
 	if not os.path.exists(d1['DEST_DIR']):
