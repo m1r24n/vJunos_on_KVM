@@ -1,0 +1,83 @@
+router bgp 4200000001
+ bgp router-id 10.1.255.1
+ neighbor 10.1.255.2 remote-as 4200000002
+ neighbor 10.1.255.2 update-source lo
+ !
+ address-family ipv4 vpn
+  neighbor 10.1.255.2 activate
+ exit-address-family
+exit
+!
+router bgp 4200000001 vrf cust1
+ !
+ address-family ipv4 unicast
+  redistribute connected
+  label vpn export auto
+  rd vpn export 100:1
+  rt vpn both 100:1
+  export vpn
+  import vpn
+ exit-address-family
+exit
+!
+router bgp 4200000001 vrf cust2
+ !
+ address-family ipv4 unicast
+  redistribute connected
+  label vpn export auto
+  rd vpn export 100:2
+  rt vpn both 100:2
+  export vpn
+  import vpn
+ exit-address-family
+exit
+
+
+
+router bgp 4200000002
+ bgp router-id 10.1.255.2
+ neighbor 10.1.255.1 remote-as 4200000001
+ neighbor 10.1.255.1 update-source lo
+ !
+ address-family ipv4 vpn
+  neighbor 10.1.255.1 activate
+ exit-address-family
+exit
+!
+
+
+router bgp 4200000002
+ bgp router-id 10.1.255.2
+ no bgp ebgp-requires-policy
+ neighbor 10.1.255.1 remote-as 4200000001
+ neighbor 10.1.255.1 ebgp-multihop 16
+ neighbor 10.1.255.1 update-source lo
+ neighbor 10.1.255.1 capability extended-nexthop
+ !
+ address-family l2vpn evpn
+  neighbor 10.1.255.2 activate
+  advertise-all-vni
+  vni 2103
+   rd 10.1.255.2:103
+   route-target import 2103:103
+   route-target export 2103:103
+  exit-vni
+  advertise-svi-ip
+ exit-address-family
+exit
+
+
+router bgp 4200000001
+ neighbor 10.1.255.2 capability extended-nexthop
+ !
+ address-family l2vpn evpn
+  neighbor 10.1.255.2 activate
+  advertise-all-vni
+  vni 2103
+   rd 10.1.255.1:103
+   route-target import 2103:103
+   route-target export 2103:103
+  exit-vni
+  advertise-svi-ip
+ exit-address-family
+exit

@@ -1,11 +1,10 @@
 #!/bin/bash
-export LXC_NAME=cl2evpn1
-export VLAN=103
-export OVS=r2p1
-export IPv4=10.1.200.12/24
-export GWv4=10.1.200.1
-export IPv6=fc00:dead:beef:a200::1000:12/64
-export GWv6=fc00:Dead:beef:a200::1
+export LXC_NAME=cl2evpn2
+export VLAN=102
+export OVS=l2p3
+export IPv4=10.1.202.12/24
+export GWv4=10.1.202.1
+export GWv6=fc00:Dead:beef:a202::1
 
 
 echo "Creating VM ${LXC_NAME}"
