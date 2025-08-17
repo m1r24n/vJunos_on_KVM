@@ -1,13 +1,12 @@
 ---
 disk: 
-  vjunosrouter: /disk2/images/vjunos/vJunos-switch-24.2R1.17.qcow2
-  vjunosswitch: /disk2/images/vjunos/vJunos-switch-24.2R1.17.qcow2
-  vjunosevolved: /disk2/images/vjunos/vJunosEvolved-23.2R2.21-EVO.qcow2
-  vjunosevolved_config: /disk2/images/vjunos/vjunosevolved_config.img
-  ubuntu: /disk2/images/ubuntu.img
-vm_dir: /disk2/vm/lab1
+  vjunosrouter: /disk3/vjunos/vJunos-router-25.2R1.9.qcow2
+  vjunosswitch: /disk3/vjunos/vJunos-switch-25.2R1.9.qcow2
+  vjunosevolved: /disk3/vjunos/vJunosEvolved-25.2R1.8-EVO.qcow2
+  vjunosevolved_config: /disk3/vjunos/vjunosevolved_config.img
+vm_dir: /disk3/vm/lab1
 mgmt:
-  bridge: br1
+  bridge: br0
   # type: ovs
   # vlan: 101
 # ovs_bridge:
@@ -15,57 +14,86 @@ mgmt:
 #   - pe12_g0
 #   - pe13_g0
 #   - pe14_g0
+ovs:
+- r1_ge0
+- r2_ge0
+- r3_e0
+- r1_ge3
+- r2_ge3
+- r3_e3
 junos_login:
   user: admin
   password: pass01
 ip_pool:
-  subnet: 192.168.171.0/24
-  gateway: 192.168.171.254
-  option-150: 192.168.171.254
+  subnet: 192.168.110.0/24
+  gateway: 192.168.110.254
+  option-150: 192.168.110.254
   range: 
-    min: 192.168.171.1
-    max: 192.168.171.20
+    min: 192.168.110.1
+    max: 192.168.110.200
+fabric:
+  ipv4_prefix: 10.1.100.0/24
+  topology:
+  - [r1,ge-0/0/1,r3,et-0/0/0,0x0]
+  - [r1,ge-0/0/2,r4,et-0/0/0,0x0]
+  - [r2,ge-0/0/1,r3,et-0/0/1,0x0]
+  - [r2,ge-0/0/2,r4,et-0/0/1,0x0]
+  - [r3,ge-0/0/2,r4,et-0/0/2,0x0]
 vm:
   r1:
     type: vjunosrouter
-    ip_address: 192.168.171.1
+    ip_address: 192.168.110.11
+    lo0:
+      family:
+        inet: 10.1.255.1
+        inet6: fc00:dead:beef:ffff::1
+        iso: 49.0001.0001.0001.00
+      protocol:
+        isis: yes
     port:
-      ge-0/0/0: r1_ge0
-      ge-0/0/1: r1_ge1
-      ge-0/0/2: wan1a
-      ge-0/0/3: wan1b
+      ge-0/0/0: 
+        bridge: r1_ge0
+      ge-0/0/3: 
+        bridge: r1_ge3
   r2:
+    type: vjunosrouter
+    ip_address: 192.168.110.12
+    lo0:
+      family:
+        inet: 10.1.255.2
+        inet6: fc00:dead:beef:ffff::2
+        iso: 49.0001.0001.0002.00
+      protocol:
+        isis: yes
+    port:
+      ge-0/0/0: 
+        bridge: r2_ge0
+      ge-0/0/3: 
+        bridge: r2_ge3
+  r3:
     type: vjunosevolved
-    ip_address: 192.168.171.2
-    port:
-      ge-0/0/0: r2_ge0
-      ge-0/0/1: r2_ge1
-      ge-0/0/2: wan1a
-      ge-0/0/3: wan1b
-      ge-0/0/4: r2_ge4
-      ge-0/0/5: r2_ge5
-  sw1:
-    type: vjunosswitch
-    ip_address: 192.168.171.3
-    port:
-      ge-0/0/0: sw1_ge0
-      ge-0/0/1: sw1_ge1
-      ge-0/0/2: r2_ge4
-      ge-0/0/3: r2_ge5
-  svr1:
-    type: ubuntu
-    port:
-      eth0: r1_ge0
-      eth1: r1_ge1
-  svr2:
-    type: ubuntu
-    port:
-      eth0: r2_ge0
-      eth1: r2_ge1
-  svr3:
-    type: ubuntu
-    port:
-      eth0: sw1_ge0
-      eth1: sw1_ge1
+    ip_address: 192.168.110.13
+    lo0:
+      family:
+        inet: 10.1.255.3
+        inet6: fc00:dead:beef:ffff::3
+        iso: 49.0001.0001.0003.00
+      protocol:
+        isis: yes
+    port: {}
+  r4:
+    type: vjunosevolved
+    ip_address: 192.168.110.14
+    lo0:
+      family:
+        inet: 10.1.255.4
+        inet6: fc00:dead:beef:ffff::4
+        iso: 49.0001.0001.0004.00
+      protocol:
+        isis: yes
+    port: {}
+
+      
+    
 
 

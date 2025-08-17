@@ -81,6 +81,7 @@ Dhcp4:
   - hostname: {{ i }}
     hw-address: '{{ vm[i].mac }}'
     ip-address: {{ vm[i].ip }}
+    {% if vm[i].type == 'junos' -%}
     option-data:
     - name: vendor-encapsulated-options
     - data: {{ i }}.conf
@@ -89,12 +90,17 @@ Dhcp4:
     - data: tftp
       name: transfer-mode
       space: vendor-encapsulated-options-space
+    {% endif %}
   {% endfor %}
   subnet4:
   - id: 1
     option-data:
     - data: {{ gateway }}
       name: routers
+    - data: 192.168.1.1
+      name: domain-name-servers
+    - data: vmmlab.com
+      name: domain-search
     - data: {{ option150 }}
       name: tftp-server-address
     pools:

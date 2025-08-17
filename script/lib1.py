@@ -9,7 +9,45 @@ from passlib.hash import md5_crypt
 import xmltodict
 import pprint
 
+def check_config(d1):
+	num_link = len(d1['fabric']['topology'])
+	for i in range(num_link):
+		br='ptp' + str(i)
+		d1['fabric']['topology'][i].append(br)
+	#pprint.pprint(d1['fabric']['topology'])
+	for i in d1['fabric']['topology']:
+		vm1 = i[0]
+		intf1 = i[1]
+		vm2 = i[2]
+		intf2 = i[3]
+		d1['vm'][vm1]['port'].update({intf1 : {'bridge' : i[5] }})
+		d1['vm'][vm2]['port'].update({intf2 : {'bridge' : i[5] }})
+	#pprint.pprint(d1['vm'])
+	sort_port(d1)
+	#pprint.pprint(d1['vm'])
+	# mask 
+	# bit 0 : ipv4, 0b000001, 0x1
+	# bit 1 : ipv6, 0b000010, 0x2
+	# bit 2 : iso,  0b000100, 0x4
+	# bit 3 : mpls  0b001000, 0x8
+	# bit 4 : ldp,  0b010000, 0x10
+	# bit 5 : rsvp, 0b100000, 0x20
 
+def ipv4_to_int(ipv4):
+	b1,b2,b3,b4 = ipv4.split('/')[0].split('.')
+	retval = (int(b1) << 24) + (int(b2) << 16) + (int(b3) << 8) + int(b4)
+	return retval
+
+def sort_port(d1):
+	#print('function sort_port')
+	for i in d1['vm'].keys():
+		intf=sorted(d1['vm'][i]['port'].keys())
+		t1 = {}
+		print(intf)
+		for j in intf:
+			t1.update({ j : d1['vm'][i]['port'][j]})
+		d1['vm'][i]['port'] = t1
+	
 def set_bridge(d1):
 	t1 = d1['vm'].keys()
 	vm = []
@@ -110,7 +148,7 @@ def prefix2netmask(prefs):
 		pref -= 8
 	return str(b[0]) + "." + str(b[1]) + "." + str(b[2]) + "." + str(b[3])
 
-def create_dhcp_config(d1):
+def create_dhcp_config_v1(d1):
 	with open(d1['template']['dhcp']) as f:
 		j2 = f.read()
 	p1 = {}
@@ -139,31 +177,63 @@ def create_dhcp_config(d1):
 	with open(filename,"w") as f:
 		f.write(config1)
 
-def create_apstra_dhcp_config(d1):
-	with open(d1['template']['apstra_ztp']) as f:
+def create_dhcp_config_v2(d1):
+	# this is for kea-dhcp4-server configuration
+	with open(d1['template']['kea4']) as f:
 		j2 = f.read()
 	p1 = {}
-	p1['subnet'] = d1['ip_pool']['subnet'].split('/')[0]
-	p1['netmask'] = prefix2netmask(d1['ip_pool']['subnet'].split('/')[1])
+	p1['intf'] = d1['mgmt']['bridge']
+	p1['subnet'] = d1['ip_pool']['subnet']
 	p1['range_min'] = d1['ip_pool']['range']['min']
 	p1['range_max'] = d1['ip_pool']['range']['max']
 	p1['gateway'] = d1['ip_pool']['gateway']
-	p1['ztp_server'] = d1['ip_pool']['option-150']
-	p1['host'] = {}
+	p1['option150'] = d1['ip_pool']['option-150']
+	p1['vm'] = {}
 	for i in d1['vm'].keys():
-		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved']:
-			p1['host'].update({i : {'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address']}})
+		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
+			if d1['vm'][i]['type'] == 'sonic':
+				p1['vm'].update({i : {'hostname': i,'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address'],'conf' : 0}})
+			else:
+				p1['vm'].update({i : {'hostname': i,'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address'],'conf' : 1}})
     #print(p1)
 	config1=Template(j2).render(p1)
+	kea4=yaml.load(config1,Loader=yaml.FullLoader)
+	kea4_json = json.dumps(kea4,indent=2)
 	if not os.path.exists(d1['DEST_DIR']):
 		os.makedirs(d1['DEST_DIR'])
 	# else:
 	# 	if not os.path.isdir(d1['DEST_DIR']):
 	# 		os.remove(d1['DEST_DIR'])
 	# 		os.makedirs(d1['DEST_DIR'])
-	filename = f"{d1['DEST_DIR']}/ztp_config.txt"
+	filename = f"{d1['DEST_DIR']}/kea-dhcp4.conf"
 	with open(filename,"w") as f:
-		f.write(config1)
+		f.write(kea4_json)
+
+# def create_apstra_dhcp_config(d1):
+# 	with open(d1['template']['apstra_ztp']) as f:
+# 		j2 = f.read()
+# 	p1 = {}
+# 	p1['subnet'] = d1['ip_pool']['subnet'].split('/')[0]
+# 	p1['netmask'] = prefix2netmask(d1['ip_pool']['subnet'].split('/')[1])
+# 	p1['range_min'] = d1['ip_pool']['range']['min']
+# 	p1['range_max'] = d1['ip_pool']['range']['max']
+# 	p1['gateway'] = d1['ip_pool']['gateway']
+# 	p1['ztp_server'] = d1['ip_pool']['option-150']
+# 	p1['host'] = {}
+# 	for i in d1['vm'].keys():
+# 		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved']:
+# 			p1['host'].update({i : {'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address']}})
+#     #print(p1)
+# 	config1=Template(j2).render(p1)
+# 	if not os.path.exists(d1['DEST_DIR']):
+# 		os.makedirs(d1['DEST_DIR'])
+# 	# else:
+# 	# 	if not os.path.isdir(d1['DEST_DIR']):
+# 	# 		os.remove(d1['DEST_DIR'])
+# 	# 		os.makedirs(d1['DEST_DIR'])
+# 	filename = f"{d1['DEST_DIR']}/ztp_config.txt"
+# 	with open(filename,"w") as f:
+# 		f.write(config1)
 
 def junos_config(d1):
     f1=[]
@@ -180,6 +250,7 @@ def print_syntax():
 	print("  config    : create configuration for DHCPD and TFTPD")
 
 def create_config(d1):
+	create_dhcp_config = create_dhcp_config_v2
 	#print(d1)
 	print("getting mac address info")
 	get_mac_fxp0(d1)
@@ -187,8 +258,9 @@ def create_config(d1):
 	print("writing junos config")
 	create_junos_config(d1)
 	print("Creating dhcpd config")
+
 	create_dhcp_config(d1)
-	create_apstra_dhcp_config(d1)
+	#create_apstra_dhcp_config(d1)
 	print("files are created on directory ./result")
 	print("upload file dhcpd.conf into dhcp server /etc/dhcpd/dhcpd.conf")
 	print(f"upload junos configuration files ({junos_config(d1)}), into root directory of tftp server")
@@ -216,6 +288,7 @@ def check_argv(argv):
 				retval['template']={
 							'junos':f"{'/'.join(t1)}/junos.j2",
 							'dhcp':f"{'/'.join(t1)}/dhcpd.j2",
+							'kea4':f"{'/'.join(t1)}/kea-dhcp4.j2",
 							'vjunosswitch':f"{'/'.join(t1)}/vjunosswitch.j2",
 							'vjunosrouter':f"{'/'.join(t1)}/vjunosrouter.j2",
 							'sonic':f"{'/'.join(t1)}/sonic.j2",
@@ -226,17 +299,17 @@ def check_argv(argv):
 				}
 				retval['DEST_DIR'] = './result'
 				## checking if vjunosevolved is defined ?
-				for i in retval['vm'].keys():
-					if retval['vm'][i]['type'] == "vjunosevolved":
-						if 'vevo_old' in retval['vm'][i].keys(): 
-							temp_port = retval['vm'][i]['port']
-							retval['vm'][i]['port']={
-								'p1': f"{i}PFE",
-								'p2': f"{i}RPIO",
-								'p3': f"{i}RPIO",
-								'p4': f"{i}PFE"
-							}
-							retval['vm'][i]['port'].update(temp_port)
+				# for i in retval['vm'].keys():
+				# 	if retval['vm'][i]['type'] == "vjunosevolved":
+				# 		if 'vevo_old' in retval['vm'][i].keys(): 
+				# 			temp_port = retval['vm'][i]['port']
+				# 			retval['vm'][i]['port']={
+				# 				'p1': f"{i}PFE",
+				# 				'p2': f"{i}RPIO",
+				# 				'p3': f"{i}RPIO",
+				# 				'p4': f"{i}PFE"
+				# 			}
+				# 			retval['vm'][i]['port'].update(temp_port)
 				if 'ovs' not in retval.keys():
 					retval['ovs']=[]
 				if 'type' in retval['mgmt'].keys():
@@ -282,24 +355,31 @@ def is_vm_defined(d1):
 def list_of_bridge(d1):
 	list_bridge=[]
 	for i in d1['vm'].keys():
-		for j in d1['vm'][i]['port'].values():
+		for j in d1['vm'][i]['port'].keys():
 			#print(j)
-			if j not in list_bridge:
-				list_bridge.append(j)
+			if 'bridge' in d1['vm'][i]['port'][j].keys():
+				b1 = d1['vm'][i]['port'][j]['bridge']
+				if b1 not in list_bridge:
+					list_bridge.append(b1)
+			else:
+				print(f"vm {i} interface {j} doesn't have bridge parameter")
+				exit()
 	return list_bridge
 
 
-def list_bridge(d1):
-	cmd="ip --json link list type bridge"
-	t1 = json.loads(subprocess.check_output(cmd,shell=True).decode())
-	list_br=[]
-	for i in t1:
-		list_br.append(i['ifname'])
-	cmd="ip --json link list type openvswitch"
-	t1 = json.loads(subprocess.check_output(cmd,shell=True).decode())
-	for i in t1:
-		list_br.append(i['ifname'])
-	pprint.pprint(list_br)
+# def list_bridge(d1):
+# 	cmd="ip --json link list type bridge"
+# 	t1 = json.loads(subprocess.check_output(cmd,shell=True).decode())
+# 	list_br=[]
+# 	for i in t1:
+# 		list_br.append(i['ifname'])
+# 	cmd="ip --json link list type openvswitch"
+# 	t1 = json.loads(subprocess.check_output(cmd,shell=True).decode())
+# 	for i in t1:
+# 		list_br.append(i['ifname'])
+# 	pprint.pprint(list_br)
+
+
 def is_bridge_defined(d1):
 	# cmd="ip --json link list type bridge"
 	# t1 = json.loads(subprocess.check_output(cmd,shell=True).decode())
@@ -425,10 +505,10 @@ def define_vm(d1):
 				_ =ports.sort()
 				for j in ports:
 					t1=f"ge{j.split('/')[2]}"
-					if d1['vm'][i]['port'][j] in d1['ovs']:
-						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':1}
+					if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
 					else:
-						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':0}
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
 					p+=1
 				pprint.pprint(data1)
 				with open(d1['template'][vm_type]) as f1:
@@ -469,10 +549,10 @@ def define_vm(d1):
 				for j in ports:
 					#t1=sonic_port(j)
 					t1 = j
-					if d1['vm'][i]['port'][j] in d1['ovs']:
-						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':1}
+					if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
 					else:
-						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':0}
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
 					p+=1
 				pprint.pprint(data1)
 				with open(d1['template'][vm_type]) as f1:
@@ -528,14 +608,14 @@ def define_vm(d1):
 				#print(ports)
 				for j in ports:
 					if j in ['p1','p2','p3','p4']:
-						data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j],'index':p}	
+						data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p}	
 					else:
 						t1=f"et{j.split('/')[2]}"
 						# data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p}
-						if d1['vm'][i]['port'][j] in d1['ovs']:
-							data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':1}
+						if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
+							data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
 						else:
-							data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':0}
+							data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
 					p+=1
 				# for j in ports:
 				# 	t1=f"ge{j.split('/')[2]}"
@@ -557,7 +637,7 @@ def define_vm(d1):
 				ports= list(d1['vm'][i]['port'].keys())
 				#_ =ports.sort()
 				for j in ports:
-					data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j]}
+					data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j]['bridge']}
 				with open(d1['template']['alpine']) as f1:
 					template1 = f1.read()
 					cmd=Template(template1).render(data1)
@@ -597,10 +677,10 @@ def define_vm(d1):
 				for j in ports:
 					#t1=sonic_port(j)
 					t1 = j
-					if d1['vm'][i]['port'][j] in d1['ovs']:
-						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':1}
+					if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
 					else:
-						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p,'ovs':0}
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
 					p+=1
 				# end of new section
 				with open(d1['template']['ubuntu']) as f1:

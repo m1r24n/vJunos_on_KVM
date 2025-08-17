@@ -8,6 +8,7 @@ import sys
 d1=lib1.check_argv(sys.argv)
 if d1:
     # print(d1)
+    lib1.check_config(d1)
     lib1.is_bridge_defined(d1)
     lib1.is_vm_defined(d1)
     if d1['cmd'] == 'config':
