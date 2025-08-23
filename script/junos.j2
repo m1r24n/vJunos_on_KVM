@@ -50,7 +50,7 @@ forwarding-options {
 
 
 interfaces {
-{% if type == 'vjunosevolved' -%}
+    {% if type == 'vjunosevolved' -%}
     re0:mgmt-0 {
         unit 0 {
             family inet {
@@ -58,7 +58,7 @@ interfaces {
             }
         }
     }
-{% else -%}
+    {% else -%}
     fxp0 {
         unit 0 {
             family inet {
@@ -66,7 +66,48 @@ interfaces {
             }
         }
     }
-{% endif -%}
+    {% endif -%}
+    {% if interfaces -%}
+    {% for intf in interfaces -%}
+    {{ intf }} {
+        {% if intf != "lo0" -%}
+        mtu 9000;
+        {% endif -%}
+        {% if interfaces[intf].inet or interfaces[intf].inet6 or interfaces[intf].mpls or interfaces[intf].iso -%}
+        unit 0 {
+            family {
+            {% if interfaces[intf].inet -%}
+                inet {
+                    address {{interfaces[intf].inet}};
+                }
+            {% endif -%}
+            {% if interfaces[intf].inet6 -%}
+                {% if interfaces[intf].inet6 == 1-%}
+                inet6;
+                {% else -%}
+                inet6 {
+                    address {{interfaces[intf].inet6}};
+                }
+                {% endif -%}
+            {% endif -%}
+            {% if interfaces[intf].iso -%}
+                {% if intf == "lo0" -%}
+                iso {
+                    address {{interfaces[intf].iso}};
+                }
+                {% else -%}
+                iso;
+                {% endif -%}
+            {% endif -%}
+            {% if interfaces[intf].mpls -%}
+                mpls;
+            {% endif -%}
+        }
+        }
+        {% endif -%}
+    }
+    {% endfor -%}
+    {% endif -%}
 }
 routing-instances {
     mgmt_junos {
@@ -90,6 +131,46 @@ protocols {
         }
         {% endif -%}
     }
+    isis {
+        level 1 disable;
+        level 2 wide-metrics-only;
+        {% for intf in interfaces -%}
+        {% if intf == "lo0" and interfaces[intf].iso -%}
+        interface lo0.0 {
+            passive;
+        }
+        {% else %}
+        {% if interfaces[intf].isis  -%}
+        interface {{ intf }} {
+            point-to-point;
+        }
+        {% endif -%}
+        {% endif -%}
+        {% endfor -%}
+        
+    }
+    mpls {
+        {% for intf in interfaces -%}
+        {% if intf != "lo0" and interfaces[intf].mpls -%}
+        interface {{ intf }}.0;
+        {% endif -%}
+        {% endfor -%}
+    }
+    rsvp {
+        {% for intf in interfaces -%}
+        {% if intf != "lo0" and interfaces[intf].rsvp -%}
+        interface {{ intf }}.0;
+        {% endif -%}
+        {% endfor -%}   
+    }
+    ldp {
+        {% for intf in interfaces -%}
+        {% if intf != "lo0" and interfaces[intf].ldp -%}
+        interface {{ intf }}.0;
+        {% endif -%}
+        {% endfor -%}   
+    }
 }
+
 
 

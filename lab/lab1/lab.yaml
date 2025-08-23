@@ -33,15 +33,17 @@ ip_pool:
     max: 192.168.110.200
 fabric:
   ipv4_prefix: 10.1.100.0/24
+  #ipv6_prefix: fc00:dead:beef:ffff:ffff::/80
   topology:
-  - [r1,ge-0/0/1,r3,et-0/0/0,0x0]
-  - [r1,ge-0/0/2,r4,et-0/0/0,0x0]
-  - [r2,ge-0/0/1,r3,et-0/0/1,0x0]
-  - [r2,ge-0/0/2,r4,et-0/0/1,0x0]
-  - [r3,ge-0/0/2,r4,et-0/0/2,0x0]
+  - [r1,ge-0/0/1,r3,et-0/0/0,0x1cf]
+  - [r1,ge-0/0/2,r4,et-0/0/0,0x1cf]
+  - [r2,ge-0/0/1,r3,et-0/0/1,0x1cf]
+  - [r2,ge-0/0/2,r4,et-0/0/1,0x1cf]
+  - [r3,et-0/0/2,r4,et-0/0/2,0x1cf]
+  - [r3,et-0/0/3,r4,et-0/0/3,0x1cf]
 vm:
   r1:
-    type: vjunosrouter
+    type: vjunosrouter  
     ip_address: 192.168.110.11
     lo0:
       family:

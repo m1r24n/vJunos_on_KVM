@@ -11,6 +11,7 @@ import pprint
 
 def check_config(d1):
 	num_link = len(d1['fabric']['topology'])
+	# set bridge
 	for i in range(num_link):
 		br='ptp' + str(i)
 		d1['fabric']['topology'][i].append(br)
@@ -24,26 +25,169 @@ def check_config(d1):
 		d1['vm'][vm2]['port'].update({intf2 : {'bridge' : i[5] }})
 	#pprint.pprint(d1['vm'])
 	sort_port(d1)
-	#pprint.pprint(d1['vm'])
-	# mask 
-	# bit 0 : ipv4, 0b000001, 0x1
-	# bit 1 : ipv6, 0b000010, 0x2
-	# bit 2 : iso,  0b000100, 0x4
-	# bit 3 : mpls  0b001000, 0x8
-	# bit 4 : ldp,  0b010000, 0x10
-	# bit 5 : rsvp, 0b100000, 0x20
-
+	add_address2intf(d1)
+	
+			
 def ipv4_to_int(ipv4):
 	b1,b2,b3,b4 = ipv4.split('/')[0].split('.')
 	retval = (int(b1) << 24) + (int(b2) << 16) + (int(b3) << 8) + int(b4)
 	return retval
+
+def bin2ip(ipbin):
+	m1 = 255<<24
+	m2 = 255<<16
+	m3 = 255 << 8
+	m4 = 255
+	b1=str((ipbin & m1) >> 24)
+	b2=str((ipbin & m2) >> 16)
+	b3=str((ipbin & m3) >> 8)
+	b4=str(ipbin & m4)
+	retval = '.'.join((b1,b2,b3,b4))
+	#print(retval)
+	return retval
+
+def add_address2intf(d1):
+	#pprint.pprint(d1['vm'])
+	# mask 
+	# bit 0 : ipv4, 0b000000001, 0x1
+	# bit 1 : ipv6, 0b000000010, 0x2
+	# bit 2 : iso,  0b000000100, 0x4
+	# bit 3 : isis  0b000001000, 0x8
+	# bit 4 : ospf  0b000010000, 0x10
+	# bit 5 : ospf3 0b000100000, 0x20
+	# bit 6 : mpls, 0b001000000, 0x40
+	# bit 7 : ldp,  0b010000000, 0x80
+	# bit 8 : rsvp, 0b100000000, 0x100
+	num_link_with_ipv4 = 0
+	num_link_with_ipv6 = 0
+	for i in d1['fabric']['topology']:
+		if i[4] & 0x1:
+			num_link_with_ipv4 +=1
+		if i[4] & 0x2:
+			num_link_with_ipv6 +=1
+	#print("v4 and v6 link ",num_link_with_ipv4,num_link_with_ipv6)
+	if num_link_with_ipv4 > 0:
+		if 'ipv4_prefix' not in d1['fabric'].keys():
+			print("ipv4 prefix is not defined on the configuration")
+			exit()
+		else:
+			# print("ipv4 prefix is defined")
+			pref_len = 32 - int(d1['fabric']['ipv4_prefix'].split('/')[1])
+			#pref_len6 = 128 - int(d1['fabric']['subnet6'].split('/')[1])
+			num_subnet = int( (2 **  pref_len) / 2)
+			#num_subnet6 = int( (2 **  pref_len6) / 2)
+			#print(f"num_link {num_link} num_subnet {num_subnet} num_subnet6 {num_subnet6}")
+			#exit(1)
+			if (num_link_with_ipv4 > num_subnet):
+				print(f"not enough ip address for fabric link\nnum of link {num_link_with_ipv4}, num of subnet {num_subnet}" )
+				exit(1)
+			# elif check_ip(d1):
+			# 	print("wrong subnet allocation")
+			# 	print(f"subnet {d1['fabric']['subnet'].split('/')[0]} can't be used with prefix {d1['fabric']['subnet'].split('/')[1]}")
+			# #elif not check_vm(d1):
+			# #	print("number of VM on topology doesn't match with on configuration")
+			else:
+				#print(f"enough ip on the subnet link {num_link_with_ipv4}, num of subnet {num_subnet}")
+				start_ip = ipv4_to_int(d1['fabric']['ipv4_prefix'])
+				#print("start_ip ",start_ip,f"{bin2ip(start_ip)}/31")
+				
+				for i in d1['fabric']['topology']:
+					if i[4] & 0x1:
+						vm1 = i[0]
+						intf1 = i[1]
+						vm2 = i[2]
+						intf2 = i[3]
+						ip_vm1 = f"{bin2ip(start_ip)}/31"
+						start_ip +=1
+						ip_vm2 = f"{bin2ip(start_ip)}/31"
+						d1['vm'][vm1]['port'][intf1].update({'inet' : ip_vm1 })
+						d1['vm'][vm2]['port'][intf2].update({'inet' : ip_vm2 })
+						start_ip +=1
+	if num_link_with_ipv6 > 0:
+		if 'ipv6_prefix' not in d1['fabric'].keys():
+			for i in d1['fabric']['topology']:
+				if i[4] & 0x2:
+					vm1 = i[0]
+					intf1 = i[1]
+					vm2 = i[2]
+					intf2 = i[3]
+					d1['vm'][vm1]['port'][intf1].update({'inet6' : 1 })
+					d1['vm'][vm2]['port'][intf2].update({'inet6' : 1 })
+		else:
+			start_ipv6 = 0
+			ipv6_address=d1['fabric']['ipv6_prefix'].split('/')[0]
+			for i in d1['fabric']['topology']:
+				if i[4] & 0x2:
+					vm1 = i[0]
+					intf1 = i[1]
+					vm2 = i[2]
+					intf2 = i[3]
+					ipv6 = str(hex(start_ipv6)).split('x')[1]
+					ipv6_vm1 = f"{ipv6_address}{ipv6}/127"
+					start_ipv6 += 1
+					ipv6 = str(hex(start_ipv6)).split('x')[1]
+					ipv6_vm2 = f"{ipv6_address}{ipv6}/127"
+					d1['vm'][vm1]['port'][intf1].update({'inet6' : ipv6_vm1 })
+					d1['vm'][vm2]['port'][intf2].update({'inet6' : ipv6_vm2  })
+					start_ipv6 += 1
+	for i in d1['fabric']['topology']:
+		vm1 = i[0]
+		intf1 = i[1]
+		vm2 = i[2]
+		intf2 = i[3]
+
+		# mask 
+		# bit 0 : ipv4, 0b000000001, 0x1
+		# bit 1 : ipv6, 0b000000010, 0x2
+		# bit 2 : iso,  0b000000100, 0x4
+		# bit 3 : isis  0b000001000, 0x8
+		# bit 4 : ospf  0b000010000, 0x10
+		# bit 5 : ospf3 0b000100000, 0x20
+		# bit 6 : mpls, 0b001000000, 0x40
+		# bit 7 : ldp,  0b010000000, 0x80
+		# bit 8 : rsvp, 0b100000000, 0x100
+		if i[4] & 0x4:
+			d1['vm'][vm1]['port'][intf1].update({'iso' : 1 })
+			d1['vm'][vm2]['port'][intf2].update({'iso' : 1 })
+		if i[4] & 0x8:
+			d1['vm'][vm1]['port'][intf1].update({'isis' : 1 })
+			d1['vm'][vm2]['port'][intf2].update({'isis' : 1 })
+		if i[4] & 0x10:
+			d1['vm'][vm1]['port'][intf1].update({'ospf' : 1 })
+			d1['vm'][vm2]['port'][intf2].update({'ospf' : 1 })
+		if i[4] & 0x20:
+			d1['vm'][vm1]['port'][intf1].update({'ospf3' : 1 })
+			d1['vm'][vm2]['port'][intf2].update({'ospf3' : 1 })
+		if i[4] & 0x40:
+			d1['vm'][vm1]['port'][intf1].update({'mpls' : 1 })
+			d1['vm'][vm2]['port'][intf2].update({'mpls' : 1 })
+		if i[4] & 0x80:
+			d1['vm'][vm1]['port'][intf1].update({'ldp' : 1 })
+			d1['vm'][vm2]['port'][intf2].update({'ldp' : 1 })
+		if i[4] & 0x100:
+			d1['vm'][vm1]['port'][intf1].update({'rsvp' : 1 })
+			d1['vm'][vm2]['port'][intf2].update({'rsvp' : 1 })
+	#pprint.pprint(d1)
+	# exit()
+
+
+def num_link_with_ip(d1):
+	retval4=0
+	retval6=0
+	for i in d1['fabric']['topology']:
+		if i[4] & 0x1:
+			retval4+=1
+		if i[4] & 0x2:
+			retval6+=1
+	return retval4, retval6
+
 
 def sort_port(d1):
 	#print('function sort_port')
 	for i in d1['vm'].keys():
 		intf=sorted(d1['vm'][i]['port'].keys())
 		t1 = {}
-		print(intf)
+		#print(intf)
 		for j in intf:
 			t1.update({ j : d1['vm'][i]['port'][j]})
 		d1['vm'][i]['port'] = t1
@@ -117,6 +261,14 @@ def create_junos_config(d1):
 			p1['gateway']=d1['ip_pool']['gateway']
 			p1['junos_user']=d1['junos_login']['user']
 			p1['junos_passwd']=md5_crypt.hash(d1['junos_login']['password'])
+			if 'lo0' in d1['vm'][i]:
+				p1['interfaces'] = {'lo0' : d1['vm'][i]['lo0']['family'] }
+			else:
+				p1['interfaces'] = None
+			for j in list(d1['vm'][i]['port'].keys()):
+			 	p1['interfaces'].update({j : d1['vm'][i]['port'][j]})
+			#pprint.pprint(p1)
+
 			config1=Template(j2).render(p1)
 			if not os.path.exists(d1['DEST_DIR']):
 				os.makedirs(d1['DEST_DIR'])
