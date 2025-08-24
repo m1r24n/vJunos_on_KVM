@@ -162,3 +162,52 @@ Screenshot recording of the previous steps can be found bellows
 
 - [Deploying vJunos Part 1](https://asciinema.org/a/dVdKmAEUZZK6EXi6vXnaRtamm)
 - [Deploying vJunos Part 2](https://asciinema.org/a/ZTGC9LoiQ695h7uMGfKqCUAmD)
+
+
+
+# create client
+1. On the linux host, install lxd
+
+       sudo snap install lxd
+       sudo lxd init
+
+3. Download lxc image, for example alpine
+       lxc image copy images:alpine/edge local: --alias alpine
+       lxc image copy ubuntu: local: --alias ubuntu
+
+4. Create client container using alpine image
+
+       lxc launch client
+
+5. Access container client and add the necessary software, such as openssh server, iperf, etc
+
+       lxc exec client sh
+       apk update
+       apk upgrade
+       apk add openssh iperf
+       rc-update add sshd
+       cat << EOF | tee -a /etc/ssh/sshd_config
+       PermitRootLogin yes
+       EOF
+       passwd root
+       service sshd start
+       exit
+       lxc stop client
+6. Create container router, and install frr software
+       lxc copy client router
+       lxc start router
+       lxc exec router sh
+       apk add frr
+       rc-update add frr iptables dnsmasq radvd
+       sed -i -e "s/bgpd=no/bgpd=yes/" /etc/frr/daemons
+       exit
+       lxc stop router
+
+7. Verify that there are two lxc container, client and router
+
+       lxc list
+
+
+
+
+       

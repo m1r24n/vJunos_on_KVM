@@ -1,0 +1,14 @@
+rdid: 10.1.255.2
+asn:  4200001000
+local_address: 10.1.255.2
+ip_rr: 10.1.255.11
+intf: ge-0/0/0
+unit: 101
+vlan: 101
+myipv4: 172.16.255.2/31
+myipv6: fc00:dead:beef:ffff::2/127
+vrf: cust1
+youripv4: 172.16.255.3
+youripv6: fc00:dead:beef:ffff::3
+yourasn: 4200000002
+vrf_target: target:1000:1

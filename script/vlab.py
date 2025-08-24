@@ -27,12 +27,12 @@ if d1:
         lib1.delete_vm(d1)
     elif d1['cmd'] == 'stop':
         lib1.stop_vm(d1)
-    elif d1['cmd'] == 'test':
-        lib1.add_to_ssh_config(d1)
     elif d1['cmd'] == 'printdata':
         lib1.printdata(d1)
     elif d1['cmd'] == 'setbr':
         lib1.set_bridge(d1)
     elif d1['cmd'] == 'listbr':
         lib1.list_bridge(d1)
+    elif d1['cmd'] == 'sshconfig':
+        lib1.add_to_ssh_config(d1)
 

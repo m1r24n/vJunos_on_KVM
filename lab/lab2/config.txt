@@ -1,0 +1,40 @@
+set protocols bgp group to_p1 type internal
+set protocols bgp group to_p1 local-address 10.1.255.3
+set protocols bgp group to_p1 family inet any
+set protocols bgp group to_p1 family inet-vpn any
+set protocols bgp group to_p1 family inet6 labeled-unicast explicit-null
+set protocols bgp group to_p1 family inet6-vpn any
+set protocols bgp group to_p1 family 
+set protocols bgp group to_p1 export nh
+set protocols bgp group to_p1 neighbor 10.1.255.11
+set protocols bgp group to_p1 family evpn signaling
+set routing-options autonomous-system 4200001000
+set interfaces ge-0/0/1 unit 0 family inet6
+set interfaces ge-0/0/2 unit 0 family inet6
+set policy-options policy-statement nh term 1 then next-hop self
+
+
+set routing-options route-distinguisher-id 10.1.255.1
+set interfaces ge-0/0/0 flexible-vlan-tagging
+set interfaces ge-0/0/0 mtu 9000
+set interfaces ge-0/0/0 encapsulation flexible-ethernet-services
+set interfaces ge-0/0/0 unit 101 vlan-id 101
+set interfaces ge-0/0/0 unit 101 family inet address 172.16.255.0/31
+set routing-instances cust1 instance-type vrf
+set routing-instances cust1 protocols bgp group to_ce1 neighbor 172.16.255.1 peer-as 4200000001
+set routing-instances cust1 interface ge-0/0/0.101
+set routing-instances cust1 vrf-target target:1000:1
+set routing-instances cust1 vrf-table-label
+
+
+set routing-options route-distinguisher-id 10.1.255.2
+set interfaces ge-0/0/0 flexible-vlan-tagging
+set interfaces ge-0/0/0 mtu 9000
+set interfaces ge-0/0/0 encapsulation flexible-ethernet-services
+set interfaces ge-0/0/0 unit 101 vlan-id 101
+set interfaces ge-0/0/0 unit 101 family inet address 172.16.255.2/31
+set routing-instances cust1 instance-type vrf
+set routing-instances cust1 protocols bgp group to_ce1 neighbor 172.16.255.3 peer-as 4200000002
+set routing-instances cust1 interface ge-0/0/0.101
+set routing-instances cust1 vrf-target target:1000:1
+set routing-instances cust1 vrf-table-label

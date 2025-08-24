@@ -1,0 +1,46 @@
+policy-options {
+    policy-statement nh {
+        term 1 {
+            from protocol bgp;
+            then {
+                next-hop self;
+                accept;
+            }
+        }
+    }
+}
+
+routing-options {
+    route-distinguisher-id {{ rdid }};
+    autonomous-system {{ asn }};
+}
+protocols {
+    bgp {
+        group to_rr {
+            type internal;
+            local-address {{ local_address }};
+            family inet-vpn {
+                any;
+            }
+            family inet {
+                any;
+            }
+            family inet6 {
+                labeled-unicast {
+                    explicit-null;
+                }
+            }
+            family inet6-vpn {
+                any;
+            }
+            family evpn {
+                signaling;
+            }
+            export nh;
+            neighbor {{ ip_rr }};
+        }
+    }
+    mpls {
+        ipv6-tunneling;
+    }
+}

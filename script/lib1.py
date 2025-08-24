@@ -9,6 +9,47 @@ from passlib.hash import md5_crypt
 import xmltodict
 import pprint
 
+# def sshconfig(d1):
+# 	vm={}
+# 	for i in d1['vm'].keys():
+# 		vm[i]=d1['vm'][i]['ip_address']
+# 	vm1={}
+# 	vm1['vm'] = vm
+# 	#pprint.pprint(vm1)
+# 	with open(d1['template']['ssh_config']) as f:
+# 		j2 = f.read()
+# 	ssh_config_txt=Template(j2).render(vm1)
+# 	#print(ssh_config_txt)
+# 	add_to_ssh_config(ssh_config_txt)
+
+# def add_to_ssh_config(file1):
+# 	ssh_config = os.path.expanduser('~') + "/.ssh/config"
+# 	orig1 = []
+# 	if os.path.exists(ssh_config):
+# 		with open(ssh_config) as f_config:
+# 			for line in f_config:
+# 				if '### by vlab.py script ###' in line:
+# 				#if '### the last line' in line:
+# 					print("found entry with ### by vmm-v3-script ###")
+# 					#print("the last line")
+# 					#orig1.append(line.rstrip())
+# 					break
+# 				else:
+# 					orig1.append(line.rstrip())
+# 		#orig1.append("\n")
+# 		last_line = orig1[-1].replace(' ','')
+# 		if last_line:
+# 			orig1.append("\n")
+# 		orig2 = "\n".join(orig1)
+# 		with open(ssh_config,"w") as wr1:
+# 			wr1.write(orig2)
+# 		with open(ssh_config,"a") as wr1:
+# 			wr1.write(file1)
+# 	else:
+# 		with open(ssh_config,"w") as wr1:
+# 			wr1.write(file1)
+	
+
 def check_config(d1):
 	num_link = len(d1['fabric']['topology'])
 	# set bridge
@@ -241,7 +282,8 @@ def set_bridge(d1):
 def get_mac_fxp0(d1):
 	vm = d1['vm'].keys()
 	for i in vm:
-		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
+		# if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
+		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic']:
 			#print(f"vm {i}")
 			cmd=f"virsh dumpxml {i} | grep \"mac address\""
 			a = subprocess.check_output(cmd,shell=True)
@@ -312,7 +354,8 @@ def create_dhcp_config_v1(d1):
 	p1['option150'] = d1['ip_pool']['option-150']
 	p1['vm_data'] = {}
 	for i in d1['vm'].keys():
-		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
+		# if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
+		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic']:
 			if d1['vm'][i]['type'] == 'sonic':
 				p1['vm_data'].update({i : {'hostname': i,'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address'],'conf' : 0}})
 			else:
@@ -342,7 +385,8 @@ def create_dhcp_config_v2(d1):
 	p1['option150'] = d1['ip_pool']['option-150']
 	p1['vm'] = {}
 	for i in d1['vm'].keys():
-		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
+		# if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
+		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic']:
 			if d1['vm'][i]['type'] == 'sonic':
 				p1['vm'].update({i : {'hostname': i,'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address'],'conf' : 0}})
 			else:
@@ -416,12 +460,12 @@ def create_config(d1):
 	print("files are created on directory ./result")
 	print("upload file dhcpd.conf into dhcp server /etc/dhcpd/dhcpd.conf")
 	print(f"upload junos configuration files ({junos_config(d1)}), into root directory of tftp server")
-	#print("Adding entries into  file ~/.ssh/config")
-	#add_to_ssh_config(d1)
+	print("Adding entries into  file ~/.ssh/config")
+	add_to_ssh_config(d1)
 
 def check_argv(argv):
 	retval={}
-	cmd_list=['addbr','create','start','config','del','stop','test','delbr','printdata','setbr','listbr']
+	cmd_list=['addbr','create','start','config','del','stop','test','delbr','printdata','setbr','listbr','sshconfig']
 	if len(argv) == 1:
 		print_syntax()
 	else:
@@ -444,10 +488,8 @@ def check_argv(argv):
 							'vjunosswitch':f"{'/'.join(t1)}/vjunosswitch.j2",
 							'vjunosrouter':f"{'/'.join(t1)}/vjunosrouter.j2",
 							'sonic':f"{'/'.join(t1)}/sonic.j2",
-							'ubuntu': f"{'/'.join(t1)}/ubuntu.j2",
-							'alpine': f"{'/'.join(t1)}/alpine.j2",
 							'vjunosevolved':f"{'/'.join(t1)}/vjunosevolved.j2",
-							'apstra_ztp':f"{'/'.join(t1)}/apstra_ztp.j2"
+							"ssh_config" : f"{'/'.join(t1)}/ssh_config.j2"
 				}
 				retval['DEST_DIR'] = './result'
 				## checking if vjunosevolved is defined ?
@@ -780,64 +822,64 @@ def define_vm(d1):
 				with open(d1['template']['vjunosevolved']) as f1:
 					template1 = f1.read()
 					cmd=Template(template1).render(data1)
-			elif d1['vm'][i]['type'] == 'alpine':
-				data1['name']=i
-				data1['disk']=disk
-				data1['vcpu']=1
-				data1['ram']=512
-				data1['interfaces']={}
-				ports= list(d1['vm'][i]['port'].keys())
-				#_ =ports.sort()
-				for j in ports:
-					data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j]['bridge']}
-				with open(d1['template']['alpine']) as f1:
-					template1 = f1.read()
-					cmd=Template(template1).render(data1)
-			elif d1['vm'][i]['type'] == 'ubuntu':
-				data1['name']=i
-				data1['disk']=disk
-				data1['vcpu']=2
-				data1['ram']=4096
-				# data1['interfaces']={}
-				# ports= list(d1['vm'][i]['port'].keys())
-				# _ =ports.sort()
-				# for j in ports:
-				# 	data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j]}
-				# new section
-				data1['interfaces']={}
-				if 'type' in d1['mgmt'].keys():
-					if d1['mgmt']['type'] == 'ovs':
-						if 'vlan' in d1['mgmt'].keys():
-							vlantemp = d1['mgmt']['vlan']
-						else:
-							vlantemp = 0
-						data1['interfaces']['mgmt']={
-							'bridge' : d1['mgmt']['bridge'],
-							'index' : 1,
-							'vlan': vlantemp,
-							'ovs': '1' 
-						} 
-				else:
-					data1['interfaces']['mgmt']={
-						'bridge' : d1['mgmt']['bridge'],
-						'index' : 1,
-						'ovs':0
-					}
-				p=2
-				ports= list(d1['vm'][i]['port'].keys())
-				_ =ports.sort()
-				for j in ports:
-					#t1=sonic_port(j)
-					t1 = j
-					if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
-						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
-					else:
-						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
-					p+=1
-				# end of new section
-				with open(d1['template']['ubuntu']) as f1:
-					template1 = f1.read()
-					cmd=Template(template1).render(data1)
+			# elif d1['vm'][i]['type'] == 'alpine':
+			# 	data1['name']=i
+			# 	data1['disk']=disk
+			# 	data1['vcpu']=1
+			# 	data1['ram']=512
+			# 	data1['interfaces']={}
+			# 	ports= list(d1['vm'][i]['port'].keys())
+			# 	#_ =ports.sort()
+			# 	for j in ports:
+			# 		data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j]['bridge']}
+			# 	with open(d1['template']['alpine']) as f1:
+			# 		template1 = f1.read()
+			# 		cmd=Template(template1).render(data1)
+			# elif d1['vm'][i]['type'] == 'ubuntu':
+			# 	data1['name']=i
+			# 	data1['disk']=disk
+			# 	data1['vcpu']=2
+			# 	data1['ram']=4096
+			# 	# data1['interfaces']={}
+			# 	# ports= list(d1['vm'][i]['port'].keys())
+			# 	# _ =ports.sort()
+			# 	# for j in ports:
+			# 	# 	data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j]}
+			# 	# new section
+			# 	data1['interfaces']={}
+			# 	if 'type' in d1['mgmt'].keys():
+			# 		if d1['mgmt']['type'] == 'ovs':
+			# 			if 'vlan' in d1['mgmt'].keys():
+			# 				vlantemp = d1['mgmt']['vlan']
+			# 			else:
+			# 				vlantemp = 0
+			# 			data1['interfaces']['mgmt']={
+			# 				'bridge' : d1['mgmt']['bridge'],
+			# 				'index' : 1,
+			# 				'vlan': vlantemp,
+			# 				'ovs': '1' 
+			# 			} 
+			# 	else:
+			# 		data1['interfaces']['mgmt']={
+			# 			'bridge' : d1['mgmt']['bridge'],
+			# 			'index' : 1,
+			# 			'ovs':0
+			# 		}
+			# 	p=2
+			# 	ports= list(d1['vm'][i]['port'].keys())
+			# 	_ =ports.sort()
+			# 	for j in ports:
+			# 		#t1=sonic_port(j)
+			# 		t1 = j
+			# 		if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
+			# 			data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
+			# 		else:
+			# 			data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
+			# 		p+=1
+			# 	# end of new section
+			# 	with open(d1['template']['ubuntu']) as f1:
+			# 		template1 = f1.read()
+			# 		cmd=Template(template1).render(data1)
 			print(f"installing VM {i} on the hypervisor")
 			#print(cmd)
 			subprocess.check_output(cmd,shell=True)
@@ -923,8 +965,7 @@ def create_ssh_config(d1):
 	list_vm=[]
 	new_ssh_config=[]
 	for i in d1['vm'].keys():
-		if d1['vm'][i]['type'] in 'vjunosswitch':
-			list_vm.append(i)
+		list_vm.append(i)
 	# print("list of vm ",list_vm)
 	new_ssh_config.append("### add by vlab.py script ###")
 	for i in list_vm:

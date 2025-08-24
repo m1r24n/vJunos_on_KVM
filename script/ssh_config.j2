@@ -1,0 +1,10 @@
+
+### by vlab.py script ###
+Host *
+    StrictHostKeyChecking no
+
+{% for i in vm -%}
+host {{ i }}
+    hostname {{ vm[i] }}
+    user admin
+{% endfor -%}

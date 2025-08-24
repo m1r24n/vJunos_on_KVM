@@ -1,0 +1,42 @@
+interfaces {
+    {{ intf }} {
+        flexible-vlan-tagging;
+        mtu 9000;
+        encapsulation flexible-ethernet-services;
+        unit {{ unit }} {
+            vlan-id {{ vlan }};
+            family inet {
+                address {{ myipv4 }};
+            }
+            family inet6 {
+                address {{ myipv6 }};
+            }
+        }
+    }
+}
+routing-instances {
+    {{ vrf }} {
+        instance-type vrf;
+        protocols {
+            bgp {
+                group to_ce {
+                    neighbor {{ youripv4 }} {
+                        family inet {
+                            any;
+                        }
+                        peer-as {{ yourasn }};
+                    }
+                    neighbor {{ youripv6}} {
+                        family inet6 {
+                            any;
+                        }
+                        peer-as {{ yourasn }};
+                    }
+                }
+            }
+        }
+        interface {{intf}}.{{unit}};
+        vrf-target {{vrf_target}};
+        vrf-table-label;
+    }
+}
