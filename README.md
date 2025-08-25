@@ -28,11 +28,13 @@ This script is tested on ubuntu 24.04 + KVM + libvirt + python3 on supermicro E2
 ## Preparing the host
 1. Install base operating system. In my lab, I am using Ubuntu Linux 24.04
 2. Install the following application 
-   - kvm 
-   - kea-dhcp4-server
-   - tftpd-hpa
-   - openswitch
 
+       - kvm 
+       - kea-dhcp4-server
+       - tftpd-hpa
+       - openswitch
+
+       
        sudo apt install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils openvswitch-switch openvswitch-common kea-dhcp4-server tftpd-hpa
 
 3. Create linux bridge to provide connection to the management interface of vJunos VM. for example the following netplan configuration file will create bridge **br0** with ip address **192.168.254.254/24**
@@ -259,7 +261,7 @@ This script is tested on ubuntu 24.04 + KVM + libvirt + python3 on supermicro E2
              ge-0/0/0: 
                bridge: pe1_ge0
          pe2:
-           type: vjunosrouter  
+           type: vjunosrouter
            ip_address: 192.168.110.12
            lo0:
              family:
@@ -270,73 +272,38 @@ This script is tested on ubuntu 24.04 + KVM + libvirt + python3 on supermicro E2
              port:
                ge-0/0/0: 
                  bridge: pe2_ge0
+                 family:
+                   inet: 10.1.255.2
+         p1:
+           type: vjunosevolved
+           ip_address: 192.168.110.14
+           lo0:
+             family:
+               inet: 10.1.255.11
+               iso: 49.0001.0001.0011.00
+             protocol:
+               isis: yes
+           port: {}
        
+
+       for example there are three vJunosVM, pe1 and pe2 are vjunosrouter, and p1 is vjunosevolved.
+       for each VM
+       - ip_address, specify ip address which will be assigned to the management interface, and included in the host reservation of the dhcp server
+       - lo0, specify interface lo0 and the ip  and iso addresses assigned to it.
+       - port, specify configuration for vJunos interface (ge-0/0/x or et-0/0/X), such as to which bridge that interface is connected to, and ip address configured on that interface. 
        
+       if other interface is not defined under port, then it may be assigned under fabric/topology, then script will automatically allocate ipv4/ipv6 addresses and other configuration (IS-IS, mpls, LDP, RSVP).
 
-
-11. This part is to define username/password which will be created by the script if vJunos is going to be preconfigure using ZTP. If other ZTP server is used, such as Juniper Aptra ZTP server, then this part is not used
-
-        junos_login:
-          user: admin
-          password: pass01
-
-12. This part is to define the ip pool for DHCP server used for ZTP process. if other ZTP server is used, such as Juniper Apstra ZTP server, then this part is not used.
-
-        ip_pool:
-          subnet: 10.1.101.0/24
-          gateway: 10.1.101.1
-          option-150: 10.1.101.2
-          range: 
-            min: 10.1.101.11
-            max: 10.1.101.99
-
-13. This part is to define the VM which will be deployed on the lab. Each VM will  have the following paramater 
-    - **type** (vjunos, vjunosevolved, alpine VM, or ubuntu VM)
-    - **ip_address** (on for vjunos and vjunosevolved) which will be used by the script to generate initial configuration for ZTP, and 
-    - **port**, which consist of port-id and which bridge this port is connected to. 
-    
-    The topology of the lab is defined by assigning bridges between VMs. The script will automatically create and generate bridge and deploy VMs on the hypervisor.
-
-        vm:
-          sw1:
-            type: vjunosswitch
-            ip_address: 10.1.101.101
-            port:
-              ge-0/0/0: link1
-              ge-0/0/1: link2
-              ge-0/0/2: link3
-              ge-0/0/3: link4
-          sw2:
-            type: vjunosswitch
-            ip_address: 10.1.101.102
-            port:
-              ge-0/0/0: link5
-              ge-0/0/1: link6
-              ge-0/0/2: link3
-              ge-0/0/3: link4
-          svr1a:
-            type: ubuntu
-            port:
-              eth0: link1
-              eth1: link2
-          svr2a:
-            type: ubuntu
-            port:
-              eth0: link5
-              eth1: link6
-
-## ZTP for vJunos
-1. To run ZTP for vJunos, requires DHCP server and TFTP Server. These two application can be run on other machine or VM or it can also run on the hypervisor
-2. Install DHCP server and TFTP server. In my testing, isc-dhcp-server and tftpd-hpa are used. The dhcpd.conf for the dhcp server created by the script is for isc-dhcp-server. 
-3. If you are using other dhcp server, then you need to modify the script.
+       if port is configured as port: {}, the it is expected that interfaces are defined under fabric/topology.
+       
 
 ## How to run the script
-1. verify that file lab.yaml is avaiable on the local directory
+1. verify that file lab.yaml is available on the local directory
 
-       cd /home/git/home/git/vJunos_on_KVM/lab/topo1
+       cd ~/git/vJunos_on_KVM/lab/lab2
        ls -la lab.yaml
 
-2. verify that the lab.yaml contain the correct information, such as disk image for vEX and ubuntu VM, ip pool for dhcp, and topology of the lab
+2. verify that the lab.yaml contain the correct information, such as disk image for vJunos VM, ip pool for dhcp, and topology of the lab
 
        cat lab.yaml
 
@@ -345,7 +312,7 @@ This script is tested on ubuntu 24.04 + KVM + libvirt + python3 on supermicro E2
        ip link list type bridge
        virsh list --all
 
-3. Run the scripts, with argument **create** to deploy the topology. The script will configure linux bridge, copy the disk image, and deploy virtual machines from the topology.
+3. Run the scripts, with argument **create** to deploy the topology. The script will configure the bridges (linux bridge or openvswitch), copy the disk image for each vJunos VM, create configuration for the vJunos VM, and deploy vJunos VM into the host, and create ssh config configuration and add it into ~/.ssh/config
 
        ../../script/vlab.py create
 
@@ -355,53 +322,45 @@ This script is tested on ubuntu 24.04 + KVM + libvirt + python3 on supermicro E2
 
 5. Verify that VMs has been deployed on the hypervisor
 
-       virsh list --all 
+       virsh list --all
 
-6. use the script to create ZTP configuration (dhcpd.conf and initial configuration for vEX) 
+6. The configuration for the dhcp server (kea-dhcp4.conf) and junos configuration for each vJunosVM will be created under directory **result**, ~/git/vJunos_on_KVM/lab/lab2/result
 
-       ../../script/vlab.py config
-       cd results
-       scp * <ztp_server>:~/
-       ssh <ztp_server>
-       sudo cp dhcpd.conf /etc/dhcp/dhcpd.conf
-       sudo systemctl restart isc-dhcp-server
-       sudo cp *.conf /srv/tftp
+7. Copy file kea-dhcp4.conf into the host /etc/kea directory and restart kea-dhcp4-server service
 
-7. Start all the VMs (vJunos and linux VM). All the vJunos VMs will go through ZTP proccess. It may take up to 5 minutes for the process to finish.
+       sudo cp result/kea-dhcp4.conf /etc/kea/
+       sudo systemctl restart kea-dhcp4-server
+       sudo systemctl status kea-dhcp4-server
+
+8. Copy configuration file for the vJunos VM into directory /srv/tftp. the name of the configuration will be <vm_name>.conf 
+
+       sudo cp result/*.conf /srv/tftp
+
+9. Start all the VM using vlab.py script. all VM will be started and they will go into ZTP process. it may take a few minutes before the vJunos VM up and running
 
        ../../script/vlab.py start
-        
-8. Set the linux bridge and virtual interface on the KVM host to allow LLDP, 802.1X and LACP between virtual machines
 
-       ../../script/vlab.py setbr
+10. Check connectivity to the vJunos VM by pinging the management ip address or access the console of the vJunos VM
 
-8. Ping management ip address of the vJunos VM to verify that vJunos are up and running
-9. Open SSH session into vJunos to verify that it boot properly
-10. Now you can start configuring the lab.
+       ping 192.168.110.11
+       virsh console pe1
 
-
-Screenshot recording of the previous steps can be found bellows
-
-- [Deploying vJunos Part 1](https://asciinema.org/a/dVdKmAEUZZK6EXi6vXnaRtamm)
-- [Deploying vJunos Part 2](https://asciinema.org/a/ZTGC9LoiQ695h7uMGfKqCUAmD)
+11.  Open SSH session into vJunos VM to verify that it boot properly and it will have configuration that was created by the script.
+12. Now you can start configuring the lab.
 
 
 
 # create client
-1. On the linux host, install lxd
 
-       sudo snap install lxd
-       sudo lxd init
+1. Download lxc image, for example alpine
 
-3. Download lxc image, for example alpine
        lxc image copy images:alpine/edge local: --alias alpine
-       lxc image copy ubuntu: local: --alias ubuntu
 
-4. Create client container using alpine image
+2. Create container **client** using alpine image (alpine image is very light, less than 4Mbytes)
 
        lxc launch client
 
-5. Access container client and add the necessary software, such as openssh server, iperf, etc
+3. Access container client and add the necessary software, such as openssh server, iperf, etc
 
        lxc exec client sh
        apk update
@@ -415,19 +374,82 @@ Screenshot recording of the previous steps can be found bellows
        service sshd start
        exit
        lxc stop client
-6. Create container router, and install frr software
-       lxc copy client router
-       lxc start router
-       lxc exec router sh
-       apk add frr
-       rc-update add frr iptables dnsmasq radvd
-       sed -i -e "s/bgpd=no/bgpd=yes/" /etc/frr/daemons
-       exit
-       lxc stop router
 
-7. Verify that there are two lxc container, client and router
 
-       lxc list
+4. copy the container **client** into container which will be connected to the vJunosVM. for example, we want create container client1 connected to bridge pe1_ge0 which is connected to port ge-0/0/0 of vJunos VM PE1
+
+       lxc copy client client1
+
+5. Modify container **client1** so its interface eth0 is connected to bridge **pe1_ge0** on vlan 101
+
+       lxc query --request PATCH /1.0/instances/client1--data "{
+         \"devices\": {
+           \"eth0\" :{
+             \"name\": \"eth0\",
+             \"nictype\": \"bridged\",
+             \"parent\": \"pe1_ge0\",
+             \"vlan\" : \"101\",
+             \"type\": \"nic\"
+           }
+         }
+       }"
+
+6. By default LXC container will use DHCP, to configure static ip address on the container, use the following script
+
+       cat << EOF | tee interfaces
+       auto eth0
+       iface eth0 inet static
+       address 172.16.10.11/24
+       gateway 172.16.10.1
+       mtu 1500
+       iface eth0 inet6 static
+       address fc00:dead:beef:aa20::1000:11/64
+       EOF
+       echo "push configuration into node client1"
+       lxc file push interfaces  client1/etc/network/interfaces
+
+7. Start the container and access it to generate traffic or test connectivity 
+
+       lxc start client1
+       lxc exec client1 sh
+
+
+## Restart the lab after host reboot.
+
+If the linux host is rebooted, VMs configuration are still available, but bridges configuration are not saved, unless it is openvswitch bridge.
+
+so before starting the lab topology, bridges must be created.
+
+to create the bridges, use the script
+
+1. enter the python3 virtual environment
+
+       source ~/vlab/bin/activate
+
+2. go into lab topology directory
+
+       cd ~/git/vJunos_on_KVM/lab/lab2
+
+3. create the bridge
+
+       ../../script/vlab.py addbr
+
+4. start the vJunos VM
+
+       ../../script/vlab.py start
+
+5. Restart lxc container to simulate client
+
+       lxc start client1
+       lxc start client2
+
+## Deleting the topology from the lab
+1. Stop the lab
+
+       ../../script/vlab.py stop
+2. Delete the lab topology, it will remove the VM, delete the disk images, and delete the bridges
+
+       ../../script/vlab.py del
 
 
 
