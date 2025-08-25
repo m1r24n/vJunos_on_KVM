@@ -1,0 +1,12 @@
+auto eth0
+iface eth0 inet static
+    address 172.16.255.13/31
+    mtu 1500
+auto eth1
+iface eth1 inet static
+    address 192.168.23.1/24
+    mtu 1500
+iface eth0 inet6 static
+    address fc00:dead:beef:ffff::13/127
+iface eth1 inet6 static
+    address fc00:dead:beef:a103::1/64

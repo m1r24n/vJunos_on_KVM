@@ -1,0 +1,24 @@
+interfaces {
+    {{ intf }} {
+        flexible-vlan-tagging;
+        mtu 9000;
+        encapsulation flexible-ethernet-services;
+        unit {{ unit }} {
+            vlan-id {{ vlan }};
+            encapsulation vlan-bridge;
+            family bridge;
+        }
+    }
+}
+routing-instances {
+    {{ vrf }} {
+        instance-type evpn;
+        vlan-id {{ vlan }};
+        interface {{intf}}.{{unit}};
+        vrf-target {{vrf_target}};
+        protocols {
+            evpn;
+        }
+    }
+}
+

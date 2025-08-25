@@ -7,13 +7,6 @@ disk:
 vm_dir: /disk3/vm/lab2
 mgmt:
   bridge: br0
-  # type: ovs
-  # vlan: 101
-# ovs_bridge:
-#   - pe11_g0
-#   - pe12_g0
-#   - pe13_g0
-#   - pe14_g0
 ovs:
 - pe1_ge0
 - pe2_ge0
@@ -21,6 +14,7 @@ ovs:
 junos_login:
   user: admin
   password: pass01
+  ssh_key: /home/irzan/.ssh/id_rsa
 ip_pool:
   subnet: 192.168.110.0/24
   gateway: 192.168.110.254

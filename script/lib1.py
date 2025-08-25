@@ -8,47 +8,8 @@ import json
 from passlib.hash import md5_crypt
 import xmltodict
 import pprint
+import pathlib
 
-# def sshconfig(d1):
-# 	vm={}
-# 	for i in d1['vm'].keys():
-# 		vm[i]=d1['vm'][i]['ip_address']
-# 	vm1={}
-# 	vm1['vm'] = vm
-# 	#pprint.pprint(vm1)
-# 	with open(d1['template']['ssh_config']) as f:
-# 		j2 = f.read()
-# 	ssh_config_txt=Template(j2).render(vm1)
-# 	#print(ssh_config_txt)
-# 	add_to_ssh_config(ssh_config_txt)
-
-# def add_to_ssh_config(file1):
-# 	ssh_config = os.path.expanduser('~') + "/.ssh/config"
-# 	orig1 = []
-# 	if os.path.exists(ssh_config):
-# 		with open(ssh_config) as f_config:
-# 			for line in f_config:
-# 				if '### by vlab.py script ###' in line:
-# 				#if '### the last line' in line:
-# 					print("found entry with ### by vmm-v3-script ###")
-# 					#print("the last line")
-# 					#orig1.append(line.rstrip())
-# 					break
-# 				else:
-# 					orig1.append(line.rstrip())
-# 		#orig1.append("\n")
-# 		last_line = orig1[-1].replace(' ','')
-# 		if last_line:
-# 			orig1.append("\n")
-# 		orig2 = "\n".join(orig1)
-# 		with open(ssh_config,"w") as wr1:
-# 			wr1.write(orig2)
-# 		with open(ssh_config,"a") as wr1:
-# 			wr1.write(file1)
-# 	else:
-# 		with open(ssh_config,"w") as wr1:
-# 			wr1.write(file1)
-	
 
 def check_config(d1):
 	num_link = len(d1['fabric']['topology'])
@@ -67,6 +28,7 @@ def check_config(d1):
 	#pprint.pprint(d1['vm'])
 	sort_port(d1)
 	add_address2intf(d1)
+	add_ssh_key(d1)
 	
 			
 def ipv4_to_int(ipv4):
@@ -258,6 +220,8 @@ def set_bridge(d1):
 	# print(f"interface {intf_list}")
 	# print(f"bridge {bridge_list}")
 	# check intf_list
+	
+	# this part of the function is to hack the linux kernel to allow LLDP and LACP frame to be forwarded between vJunos VM
 	new_intf_list=[]
 	for i in intf_list:
 		file1=f"/sys/class/net/{i}/brport/group_fwd_mask"
@@ -291,18 +255,39 @@ def get_mac_fxp0(d1):
 			print(f"vm {i} mac {mac}")
 			d1['vm'][i]['mac']=mac
 
+def add_ssh_key(d1):
+	if 'ssh_key_name' in d1['junos_login'].keys():
+		key_file_priv = str(pathlib.Path.home()) + "/.ssh/" + d1['junos_login']['ssh_key_name']
+	else:
+		key_file_priv = str(pathlib.Path.home()) + "/.ssh/id_rsa"
+
+	key_file = key_file_priv + ".pub"
+	d1['junos_login']['ssh_key_priv']=key_file_priv
+	# try:
+	if os.path.exists(key_file):
+		with open(key_file) as f:
+			ssh_key = f.read()
+		d1['junos_login']['ssh_key']=ssh_key.strip()
+		
+	# except Exception as e:
+	# 	print(e)
+	# 	exit()
+
 def create_junos_config(d1):
 	with open(d1['template']['junos']) as f:
 		j2 = f.read()
 	p1 = {}
+	p1['junos_user']=d1['junos_login']['user']
+	p1['junos_passwd']=md5_crypt.hash(d1['junos_login']['password'])
+	if 'ssh_key' in d1['junos_login'].keys():
+		p1['ssh_key']=d1['junos_login']['ssh_key']
 	for i in d1['vm'].keys():
 		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter']:
 			p1['hostname']=i
 			p1['type']= d1['vm'][i]['type']
 			p1['ip_address']=f"{d1['vm'][i]['ip_address']}/{d1['ip_pool']['subnet'].split('/')[1]}"
 			p1['gateway']=d1['ip_pool']['gateway']
-			p1['junos_user']=d1['junos_login']['user']
-			p1['junos_passwd']=md5_crypt.hash(d1['junos_login']['password'])
+			
 			if 'lo0' in d1['vm'][i]:
 				p1['interfaces'] = {'lo0' : d1['vm'][i]['lo0']['family'] }
 			else:
@@ -405,32 +390,6 @@ def create_dhcp_config_v2(d1):
 	with open(filename,"w") as f:
 		f.write(kea4_json)
 
-# def create_apstra_dhcp_config(d1):
-# 	with open(d1['template']['apstra_ztp']) as f:
-# 		j2 = f.read()
-# 	p1 = {}
-# 	p1['subnet'] = d1['ip_pool']['subnet'].split('/')[0]
-# 	p1['netmask'] = prefix2netmask(d1['ip_pool']['subnet'].split('/')[1])
-# 	p1['range_min'] = d1['ip_pool']['range']['min']
-# 	p1['range_max'] = d1['ip_pool']['range']['max']
-# 	p1['gateway'] = d1['ip_pool']['gateway']
-# 	p1['ztp_server'] = d1['ip_pool']['option-150']
-# 	p1['host'] = {}
-# 	for i in d1['vm'].keys():
-# 		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved']:
-# 			p1['host'].update({i : {'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address']}})
-#     #print(p1)
-# 	config1=Template(j2).render(p1)
-# 	if not os.path.exists(d1['DEST_DIR']):
-# 		os.makedirs(d1['DEST_DIR'])
-# 	# else:
-# 	# 	if not os.path.isdir(d1['DEST_DIR']):
-# 	# 		os.remove(d1['DEST_DIR'])
-# 	# 		os.makedirs(d1['DEST_DIR'])
-# 	filename = f"{d1['DEST_DIR']}/ztp_config.txt"
-# 	with open(filename,"w") as f:
-# 		f.write(config1)
-
 def junos_config(d1):
     f1=[]
     for i in d1['vm'].keys():
@@ -493,6 +452,7 @@ def check_argv(argv):
 				}
 				retval['DEST_DIR'] = './result'
 				## checking if vjunosevolved is defined ?
+				# this is for early release of vjunosevolved
 				# for i in retval['vm'].keys():
 				# 	if retval['vm'][i]['type'] == "vjunosevolved":
 				# 		if 'vevo_old' in retval['vm'][i].keys(): 
@@ -611,6 +571,7 @@ def is_bridge_defined(d1):
 		# d1['bridge_not_defined'] = st3.difference(st2)
 
 def add_bridge(d1):
+	
 	if d1['bridge_not_defined']:
 		#print(f"bridges {d1['bridge_not_defined']}")
 		print("starting the bridges")
@@ -618,10 +579,6 @@ def add_bridge(d1):
 			if i not in d1['ovs']:
 				cmd = f"sudo ip link add dev {i} type bridge"
 				subprocess.check_output(cmd,shell=True)
-				# this is to hack the linux kernel to allow LLDP and LACP frame to be forwarded.
-				# it can only works with modified linux kernel.
-				# cmd = f"echo 0x400c | sudo tee  /sys/class/net/{i}/bridge/group_fwd_mask"
-				# subprocess.check_output(cmd,shell=True)
 				cmd = f"sudo ip link set dev {i} up"
 				subprocess.check_output(cmd,shell=True)
 				cmd = f"sudo sysctl -w \"net.ipv6.conf.{i}.disable_ipv6=1\""
@@ -631,8 +588,6 @@ def add_bridge(d1):
 				subprocess.check_output(cmd,shell=True)
 				cmd = f"sudo sysctl -w \"net.ipv6.conf.{i}.disable_ipv6=1\""
 				subprocess.check_output(cmd,shell=True)
-
-			
 	else:
 		print("bridges are defined")
 
@@ -972,6 +927,9 @@ def create_ssh_config(d1):
 		new_ssh_config.append(f"Host {i}")
 		new_ssh_config.append(f"  hostname {d1['vm'][i]['ip_address']}")
 		new_ssh_config.append(f"  user {d1['junos_login']['user']}")
+		# ssh_key is disabled, related to  DSSKey class  that has been removed from paramiko modules
+		# which make pyez doesn't work.
+		# new_ssh_config.append(f"  IdentityFile {d1['junos_login']['ssh_key_priv']}")
 	return new_ssh_config
 
 def add_to_ssh_config(d1):

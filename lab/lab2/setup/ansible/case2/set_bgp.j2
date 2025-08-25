@@ -1,0 +1,46 @@
+interfaces {
+    {{ intf }} {
+        flexible-vlan-tagging;
+        mtu 9000;
+        encapsulation flexible-ethernet-services;
+        unit {{ unit }} {
+            vlan-id {{ vlan }};
+            family inet {
+                address {{ myipv4 }};
+            }
+            family inet6 {
+                address {{ myipv6 }};
+            }
+        }
+    }
+    ge-0/0/1 {
+        unit 0 {
+            family inet6;
+        }
+    }
+    ge-0/0/2 {
+        unit 0 {
+            family inet6;
+        }
+    }
+}
+protocols {
+    bgp {
+        group to_ce {
+            neighbor {{ youripv4 }} {
+                family inet {
+                    any;
+                }
+                peer-as {{ yourasn }};
+            }
+            neighbor {{ youripv6}} {
+                family inet6 {
+                    any;
+                }
+                peer-as {{ yourasn }};
+            }
+        }
+    }
+}
+
+

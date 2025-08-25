@@ -1,0 +1,8 @@
+intf: ge-0/0/0
+unit: 102
+vlan: 102
+myipv4: 172.16.255.10/31
+myipv6: fc00:dead:beef:ffff::10/127
+youripv4: 172.16.255.11
+youripv6: fc00:dead:beef:ffff::11
+yourasn: 4200000012

@@ -8,6 +8,9 @@ system {
             class super-user;
             authentication {
 				encrypted-password "{{junos_passwd}}"; ## SECRET-DATA
+                {% if ssh_key -%}
+                ssh-rsa "{{ssh_key}}";
+                {% endif -%}
             }
         }
     }

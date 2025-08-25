@@ -1,0 +1,18 @@
+---
+- name: set bgp configuration
+  hosts: all
+  connection: local
+  gather_facts: no
+
+  vars:
+    user: admin
+    password: pass01
+
+  tasks:
+    - name: load bgp configuration
+      juniper.device.config:  
+        template: set_bgp.j2
+        format: text
+        load: merge
+        vars: "{{ lookup('file', playbook_dir + '/vars_' + inventory_hostname + '.yaml') | from_yaml}}"
+
