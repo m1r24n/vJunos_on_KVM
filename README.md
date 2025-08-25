@@ -294,7 +294,7 @@ This script is tested on ubuntu 24.04 + KVM + libvirt + python3 on supermicro E2
        
        if other interface is not defined under port, then it may be assigned under fabric/topology, then script will automatically allocate ipv4/ipv6 addresses and other configuration (IS-IS, mpls, LDP, RSVP).
 
-       if port is configured as port: {}, the it is expected that interfaces are defined under fabric/topology.
+       if port is configured as port: {}, then it is expected that interfaces are defined under fabric/topology.
        
 
 ## How to run the script
