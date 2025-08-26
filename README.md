@@ -1,4 +1,6 @@
-# how to automatically deploy vJunos on KVM, version 0.5
+# how to automatically deploy vJunos on KVM
+
+version 0.5
 
 ## Introduction
 This repository contains my notes and python scripts to deploy multiple vJunos VMs on KVM on linux platform.
