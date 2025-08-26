@@ -4,13 +4,13 @@ disk:
   vjunosswitch: /disk3/vjunos/vJunos-switch-25.2R1.9.qcow2
   vjunosevolved: /disk3/vjunos/vJunosEvolved-25.2R1.8-EVO.qcow2
   vjunosevolved_config: /disk3/vjunos/vjunosevolved_config.img
-vm_dir: /disk3/vm/lab1
+vm_dir: /disk3/vm/lab3
 mgmt:
   bridge: br0
 ovs:
 - r1_ge0
 - r2_ge0
-- r3_ge0
+- r3_et0
 junos_login:
   user: admin
   password: pass01
@@ -28,8 +28,8 @@ fabric:
   #ipv6_prefix: fc00:dead:beef:ffff:ffff::/80
   topology:
   - [r1,ge-0/0/1,r2,ge-0/0/1,0xf]
-  - [r1,ge-0/0/2,r3,ge-0/0/1,0xf]
-  - [r2,ge-0/0/2,r3,ge-0/0/2,0xf]
+  - [r1,ge-0/0/2,r3,et-0/0/1,0xf]
+  - [r2,ge-0/0/2,r3,et-0/0/2,0xf]
 vm:
   r1:
     type: vjunosrouter  
@@ -58,7 +58,7 @@ vm:
       ge-0/0/0: 
         bridge: r2_ge0
   r3:
-    type: vjunosrouter
+    type: vjunosevolved
     ip_address: 192.168.110.13
     lo0:
       family:
@@ -69,7 +69,7 @@ vm:
         isis: yes
     port:
       et-0/0/0: 
-        bridge: r3_ge0
+        bridge: r3_et0
 
       
     

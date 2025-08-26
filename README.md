@@ -139,12 +139,15 @@ This script is tested on ubuntu 24.04 + KVM + libvirt + python3 on supermicro E2
        cd ~/git
        git clone https://github.com/m1r24n/vJunos_on_KVM.git
 
+       or 
+       git clone git@github.com:m1r24n/vJunos_on_KVM.git
+       
 5. Install the python packages required by the script
 
        cd ~/git/vJunos_on_KVM/script
-       pip3 install -r requirements
+       pip3 install -r requirements.txt
 
-## Anatomi of the script
+## Anatomy of the script
 
 1. The python scripts used to deploy vJunos can be found under directory [./script](./script)
 
@@ -199,15 +202,20 @@ This script is tested on ubuntu 24.04 + KVM + libvirt + python3 on supermicro E2
          password: pass01
          ssh_key: /home/irzan/.ssh/id_rsa
 
-5. Section **ip_pool** specify the configuration required for the dhcp server (kea-dhcp4-server). change the ip address accordingly.
+5. Section **ip_pool** specify the configuration required for the dhcp server (kea-dhcp4-server). .
 
        ip_pool:
          subnet: 192.168.110.0/24
-         gateway: 192.168.110.254
-         option-150: 192.168.110.254
+         gateway: 192.168.110.254         # ip address of interface br0
+         option-150: 192.168.110.254      # ip address of interface br0
+         dns: 192.168.1.1                 # ip address of local dns server
          range: 
            min: 192.168.110.1
            max: 192.168.110.200
+
+       Change the ip address accordingly. 
+       Set the value of gateway and option-150 to the ip address of bridge interface where the management interface of vJunos is connected to, in this example it is ip address of interface br0
+       Set the value of dns to ip address of the local dns server
 
 6. Section **fabric** specify the topology of the lab, in this case the connection between vJunosVM, for example which port of VM1 connected to which port of VM2
 
@@ -355,10 +363,12 @@ This script is tested on ubuntu 24.04 + KVM + libvirt + python3 on supermicro E2
 1. Download lxc image, for example alpine
 
        lxc image copy images:alpine/edge local: --alias alpine
+       lxc image ls
 
 2. Create container **client** using alpine image (alpine image is very light, less than 4Mbytes)
 
-       lxc launch client
+       lxc launch alpine client
+       lxc ls
 
 3. Access container client and add the necessary software, such as openssh server, iperf, etc
 

@@ -97,6 +97,8 @@ Dhcp4:
       name: routers
     - data: {{ option150 }}
       name: tftp-server-address
+    - data: {{ dns }}
+      name: domain-name-servers
     pools:
     - pool: {{ range_min }} - {{ range_max }}
     subnet: {{ subnet }}

@@ -368,6 +368,12 @@ def create_dhcp_config_v2(d1):
 	p1['range_max'] = d1['ip_pool']['range']['max']
 	p1['gateway'] = d1['ip_pool']['gateway']
 	p1['option150'] = d1['ip_pool']['option-150']
+	# cmd="resolvectl status | grep DNS| grep 'DNS Servers:'"
+	# result = subprocess.check_output(cmd,shell=True)
+	# dns = result.decode().strip().split()[2:][0]
+	#print(dns)
+	# p1['dns'] = dns
+	p1['dns'] = d1['ip_pool']['dns']
 	p1['vm'] = {}
 	for i in d1['vm'].keys():
 		# if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
