@@ -28,6 +28,9 @@ the initial configuration for vJunos VM will consist the following:
 This script is tested on ubuntu 24.04 + KVM + libvirt + python3 on supermicro E200-8d with 128G RAM and Intel NUC i7/64G RAM
 
 ## Preparing the host
+
+Screenshot recording of these steps can be found [here](https://asciinema.org/a/RmNIrO4dn5krvVPHUleEsf2sV)
+
 1. Install base operating system. In my lab, I am using Ubuntu Linux 24.04
 2. Install the following application 
 
