@@ -28,6 +28,9 @@ node | type
 
 
 ## how to run the lab
+
+Screenshot recording of these steps can be found [here](https://asciinema.org/a/WynkbDKkksU3b3RKb6RZrSNAO)
+
 1. enter the lab directory 
 
         cd ~/git/vJunos_on_KVM/lab/lab1
