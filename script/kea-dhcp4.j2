@@ -13,6 +13,8 @@ Dhcp4:
   interfaces-config:
     interfaces:
     - {{ intf }}
+    service-sockets-max-retries: 200000
+    service-sockets-retry-wait-time: 5000
   lease-database:
     lfc-interval: 3600
     type: memfile
