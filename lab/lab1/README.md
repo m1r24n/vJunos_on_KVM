@@ -1,7 +1,7 @@
 # Lab 1
 ## Lab topology
 
-![images/topology.png](images/topology.png)
+![images/topology.png](images/topology.webp)
 
 
 ## node in the lab
@@ -69,4 +69,4 @@ node | type
         cd ~/git/vJunos_on_KVM/lab/lab1/setup/ansible
         ansible-playbook set_intf.yaml
 
-9. Create LXC container to simulate client. there is a [shell script](setup/lxc/create_client.sh) to create multiple client
+9. Create LXC container to simulate client (c11,c12 ... c31, c32). there is a [shell script](setup/lxc/create_client.sh) to create multiple client

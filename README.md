@@ -2,6 +2,11 @@
 
 version 0.5
 
+## DISCLAIMER
+
+       The codes in repository may be modified for bug fixes and new features.
+       Please keep your local copy updated.
+
 ## Introduction
 This repository contains my notes and python scripts to deploy multiple vJunos VMs on KVM on linux platform.
 
