@@ -468,5 +468,17 @@ to create the bridges, use the script
 
 
 
+## Troubleshooting
+### vJunos VM doesn't get the ip address from the dhcp server
 
+Sometimes, vJunos VM doesn't get the ip address from the dhcp server.
+
+When tcpdump was done on the bridge interface, dhcp request packets from the vJunos VM are available, but no reply packets was available from dhcp server.
+
+Restarting the dhcp server or/and bringing down and bringing up the bridge interface will solve the issue...
+
+       sudo ip link set dev br0
+       sudo ip link set dev br0 up 
+
+       
        
