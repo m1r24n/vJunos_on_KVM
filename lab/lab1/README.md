@@ -51,7 +51,7 @@ Screenshot recording of these steps can be found [here](https://asciinema.org/a/
         sudo result/kea-dhcp4.conf /etc/kea/
         sudo systemctl restart kea-dhcp4-server
 
-5. Copy vJunos VM initial configuration into /srv/tft
+5. Copy vJunos VM initial configuration into /srv/tftp
 
         sudo cp result/*.conf /srv/tftp
 

@@ -41,7 +41,7 @@ iface eth0 inet static
     mtu 1500
 auto eth1
 iface eth1 inet static
-    address 192.168.2${i}.1/24
+    address 192.168.${i}.1/24
     mtu 1500
 iface eth0 inet6 static
     address fc00:dead:beef:ffff::${MYIP}/127
@@ -79,9 +79,9 @@ EOF
 
 echo "Creating dhcp configuration"
 cat << EOF | tee dnsmasq.conf
-dhcp-range=192.168.2${i}.11,192.168.2${i}.100,255.255.255.0,2h
-dhcp-option=option:router,192.168.2${i}.1
-dhcp-option=option:dns-server,192.168.2${i}.1
+dhcp-range=192.168.${i}.11,192.168.${i}.100,255.255.255.0,2h
+dhcp-option=option:router,192.168.${i}.1
+dhcp-option=option:dns-server,192.168.${i}.1
 domain=local.lan
 local=/local.lan/
 EOF
