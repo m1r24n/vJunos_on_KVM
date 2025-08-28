@@ -330,40 +330,45 @@ Screenshot recording of these steps can be found [here](https://asciinema.org/a/
        ip link list type bridge
        virsh list --all
 
-3. Run the scripts, with argument **create** to deploy the topology. The script will configure the bridges (linux bridge or openvswitch), copy the disk image for each vJunos VM, create configuration for the vJunos VM, and deploy vJunos VM into the host, and create ssh config configuration and add it into ~/.ssh/config
+4. Run the scripts, with argument **create** to deploy the topology. The script will configure the bridges (linux bridge or openvswitch), copy the disk image for each vJunos VM, create configuration for the vJunos VM, and deploy vJunos VM into the host, and create ssh config configuration and add it into ~/.ssh/config
 
        ../../script/vlab.py create
 
-4. Verify that linux bridge for connectivity between VMs has been created
+5. Verify that linux bridge for connectivity between VMs has been created
 
        ip link list type bridge
 
-5. Verify that VMs has been deployed on the hypervisor
+6. Verify that VMs has been deployed on the hypervisor
 
        virsh list --all
 
-6. The configuration for the dhcp server (kea-dhcp4.conf) and junos configuration for each vJunosVM will be created under directory **result**, ~/git/vJunos_on_KVM/lab/lab2/result
+7. The configuration for the dhcp server (kea-dhcp4.conf) and junos configuration for each vJunosVM will be created under directory **result**, ~/git/vJunos_on_KVM/lab/lab2/result
 
-7. Copy file kea-dhcp4.conf into the host /etc/kea directory and restart kea-dhcp4-server service
+8. Copy file kea-dhcp4.conf into the host /etc/kea directory and restart kea-dhcp4-server service
 
        sudo cp result/kea-dhcp4.conf /etc/kea/
        sudo systemctl restart kea-dhcp4-server
        sudo systemctl status kea-dhcp4-server
 
-8. Copy configuration file for the vJunos VM into directory /srv/tftp. the name of the configuration will be <vm_name>.conf 
+9. Copy configuration file for the vJunos VM into directory /srv/tftp. the name of the configuration will be <vm_name>.conf 
 
        sudo cp result/*.conf /srv/tftp
 
-9. Start all the VM using vlab.py script. all VM will be started and they will go into ZTP process. it may take a few minutes before the vJunos VM up and running
+10. Start all the VM using vlab.py script. all VM will be started and they will go into ZTP process. it may take a few minutes before the vJunos VM up and running
 
        ../../script/vlab.py start
 
-10. Check connectivity to the vJunos VM by pinging the management ip address or access the console of the vJunos VM
+11. Check connectivity to the vJunos VM by pinging the management ip address or access the console of the vJunos VM
 
-       ping 192.168.110.11
-       virsh console pe1
+        ping 192.168.110.11
+        virsh console pe1
 
-11.  Open SSH session into vJunos VM to verify that it boot properly and it will have configuration that was created by the script.
+11. Open SSH session into vJunos VM to verify that it boot properly and it will have configuration that was created by the script.
+
+        ssh pe1 
+        show configuration 
+        show lldp neigh
+
 12. Now you can start configuring the lab.
 
 
@@ -402,7 +407,7 @@ Screenshot recording of these steps can be found [here](https://asciinema.org/a/
 
 5. Modify container **client1** so its interface eth0 is connected to bridge **pe1_ge0** on vlan 101
 
-       lxc query --request PATCH /1.0/instances/client1--data "{
+       lxc query --request PATCH /1.0/instances/client1 --data "{
          \"devices\": {
            \"eth0\" :{
              \"name\": \"eth0\",
