@@ -11,15 +11,15 @@ virt-install --name {{name}} \
 {% for intf in interfaces -%}
     {% if intf == 'mgmt' -%}
     {% if interfaces[intf].ovs -%}
-    --network=bridge:{{ interfaces[intf].bridge }},model=virtio,virtualport_type=openvswitch \
+    --network=bridge:{{ interfaces[intf].bridge }},model=e1000,virtualport_type=openvswitch \
     {% else -%}
-    --network=bridge:{{ interfaces[intf].bridge }},model=virtio \
+    --network=bridge:{{ interfaces[intf].bridge }},model=e1000 \
     {% endif -%}
     {% else -%}
     {% if interfaces[intf].ovs -%}
-    --network=bridge:{{ interfaces[intf].bridge }},model=virtio,virtualport_type=openvswitch \
+    --network=bridge:{{ interfaces[intf].bridge }},model=e1000,virtualport_type=openvswitch \
     {% else -%}
-    --network=bridge:{{ interfaces[intf].bridge }},model=virtio \
+    --network=bridge:{{ interfaces[intf].bridge }},model=e1000 \
     {% endif -%}
     {% endif -%}
 {% endfor -%}
