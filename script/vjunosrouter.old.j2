@@ -1,5 +1,6 @@
 virt-install --name {{name}} --disk {{disk}},device=disk \
     --cpu {{cpu_model}},+vmx \
+    --sysinfo system.product="VM-VMX",system.family="lab",system.serial="type=1" \
     --ram {{ram}} --vcpu {{vcpu}}  \
     --osinfo ubuntu22.04 \
 {% for intf in interfaces -%}
