@@ -1,0 +1,15 @@
+qemu-system-x86_64 --version
+QEMU emulator version 8.2.2 (Debian 1:8.2.2+ds-0ubuntu1.9)
+Copyright (c) 2003-2023 Fabrice Bellard and the QEMU Project developers
+------------------------
+cat /etc/lsb-release
+DISTRIB_ID=Ubuntu
+DISTRIB_RELEASE=24.04
+DISTRIB_CODENAME=noble
+DISTRIB_DESCRIPTION="Ubuntu 24.04.3 LTS"
+----------------
+uname -a
+Linux mir-desktop 6.14.0-29-generic #29~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Thu Aug 14 16:52:50 UTC 2 x86_64 x86_64 x86_64 GNU/Linux
+-----------
+libvirtd --version
+libvirtd (libvirt) 10.0.0

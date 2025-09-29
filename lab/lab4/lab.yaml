@@ -1,0 +1,58 @@
+---
+disk: 
+  vjunosrouter: /disk3/vjunos/vJunos-router-25.2R1.9.qcow2
+  vjunosswitch: /disk3/vjunos/vJunos-switch-25.2R1.9.qcow2
+  vjunosevolved: /disk3/vjunos/vJunosEvolved-25.2R1.8-EVO.qcow2
+  vjunosevolved_config: /disk3/vjunos/vjunosevolved_config.img
+vm_dir: /disk3/vm/lab1
+mgmt:
+  bridge: br1
+ovs:
+- r1_ge0
+- r2_et0
+junos_login:
+  user: admin
+  password: pass01
+  ssh_key_name: id_rsa
+ip_pool:
+  subnet: 192.168.254.0/24
+  gateway: 192.168.254.254
+  option-150: 192.168.254.254
+  dns: 192.168.1.1
+  range: 
+    min: 192.168.254.1
+    max: 192.168.254.200
+fabric:
+  ipv4_prefix: 10.1.100.0/24
+  #ipv6_prefix: fc00:dead:beef:ffff:ffff::/80
+  topology:
+  - [r1,ge-0/0/1,r2,et-0/0/1,0xf]
+  - [r1,ge-0/0/2,r2,et-0/0/2,0xf]
+vm:
+  r1:
+    type: vjunosrouter  
+    ip_address: 192.168.254.11
+    lo0:
+      family:
+        inet: 10.1.255.1
+        inet6: fc00:dead:beef:ffff::1
+        iso: 49.0001.0001.0001.00
+      protocol:
+        isis: yes
+    port:
+      ge-0/0/0: 
+        bridge: r1_ge0
+  r2:
+    type: vjunosevolved
+    ip_address: 192.168.254.12
+    lo0:
+      family:
+        inet: 10.1.255.2
+        inet6: fc00:dead:beef:ffff::2
+        iso: 49.0001.0001.0002.00
+      protocol:
+        isis: yes
+    port:
+      et-0/0/0: 
+        bridge: r2_et0
+
