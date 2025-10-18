@@ -3,7 +3,11 @@ virt-install --name {{name}} \
     --disk {{disk_config}},bus=usb \
     --cpu {{cpu_model}},+vmx \
     --boot uefi,loader_secure=no \
+    {% if bx  -%}
+    --sysinfo system.product="Bochs",system.serial=chassis_no=0:slot=0:type=1:assembly_id=0x0DA9:platform=272:master=0:channelized=no,system.manufacturer="Bochs" \
+    {% else -%}
     --sysinfo system.product="Bochs",system.serial=chassis_no=0:slot=0:type=1:assembly_id=0x0D20:platform=251:master=0:channelized=no,system.manufacturer="Bochs" \
+    {% endif -%}
     --sysinfo bios.vendor="Bochs",bios.version="Bochs" \
     --sysinfo chassis.manufacturer="Bochs" \
     --ram {{ram}} --vcpu {{vcpu}}  \

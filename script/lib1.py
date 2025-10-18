@@ -726,6 +726,8 @@ def define_vm(d1):
 				data1['disk_config']=disk_cfg
 				data1['vcpu']=4
 				data1['ram']=8192
+				if 'bx' in d1['vm'][i].keys():
+					data1['bx']=1
 				# data1['ram']=16384
 				data1['cpu_model']=cpu_model
 				data1['interfaces']={}

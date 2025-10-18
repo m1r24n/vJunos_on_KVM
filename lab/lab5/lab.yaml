@@ -10,10 +10,10 @@ vm_dir: /disk3/vm/lab4
 mgmt:
   bridge: br1
 ovs:
-- r1_ge0
-- r3_ge0
-- r2_ge0
-- r4_ge0
+- r1_et0
+- r3_et0
+- r2_et0
+- r4_et0
 junos_login:
   user: admin
   password: pass01
@@ -30,15 +30,16 @@ fabric:
   ipv4_prefix: 10.1.100.0/24
   #ipv6_prefix: fc00:dead:beef:ffff:ffff::/80
   topology:
-  - [r1,ge-0/0/1,r2,et-0/0/1,0xf]
-  - [r1,ge-0/0/2,r4,et-0/0/1,0xf]
-  - [r3,ge-0/0/1,r2,et-0/0/2,0xf]
-  - [r3,ge-0/0/2,r4,et-0/0/2,0xf]
+  - [r1,et-0/0/1,r2,et-0/0/1,0xf]
+  - [r1,et-0/0/2,r4,et-0/0/1,0xf]
+  - [r3,et-0/0/1,r2,et-0/0/2,0xf]
+  - [r3,et-0/0/2,r4,et-0/0/2,0xf]
   - [r2,et-0/0/3,r4,et-0/0/3,0xf]
 vm:
   r1:
-    type: vjunosrouter
+    type: vjunosevolved
     ip_address: 192.168.254.11
+    bx: yes
     lo0:
       family:
         inet: 10.1.255.1
@@ -47,10 +48,11 @@ vm:
       protocol:
         isis: yes
     port:
-      ge-0/0/0: 
-        bridge: r1_ge0
+      et-0/0/0: 
+        bridge: r1_et0
   r2:
     type: vjunosevolved
+    bx: yes
     ip_address: 192.168.254.12
     lo0:
       family:
@@ -63,7 +65,8 @@ vm:
       et-0/0/0: 
         bridge: r2_et0
   r3:
-    type: vjunosrouter
+    type: vjunosevolved
+    bx: yes
     ip_address: 192.168.254.13
     lo0:
       family:
@@ -73,8 +76,8 @@ vm:
       protocol:
         isis: yes
     port:
-      ge-0/0/0: 
-        bridge: r3_ge0
+      et-0/0/0: 
+        bridge: r3_et0
   r4:
     type: vjunosevolved
     bx: yes
@@ -87,6 +90,6 @@ vm:
       protocol:
         isis: yes
     port:
-      ee-0/0/0: 
+      et-0/0/0: 
         bridge: r4_et0
 
