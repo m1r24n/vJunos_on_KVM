@@ -1,6 +1,9 @@
 ---
 - name: set bgp configuration
-  hosts: all
+  hosts: 
+  - pe1
+  - pe2
+  - pe3
   connection: local
   gather_facts: no
 

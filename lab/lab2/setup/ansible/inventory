@@ -2,6 +2,12 @@
 pe1
 pe2
 pe3
+p1 
+p2 
+[pe]
+pe1
+pe2
+pe3
 
 [all:vars]
 ansible_python_interpreter=python3

@@ -201,7 +201,7 @@ def set_bridge(d1):
 	intf_list=[]
 	bridge_list=[]
 	for i in t1:
-		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic']:
+		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','aoscx']:
 			vm.append(i)
 	for i in vm:
 		cmd = f"virsh domiflist {i} | tail -n +4"
@@ -247,7 +247,7 @@ def get_mac_fxp0(d1):
 	vm = d1['vm'].keys()
 	for i in vm:
 		# if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
-		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic']:
+		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','aoscx']:
 			#print(f"vm {i}")
 			cmd=f"virsh dumpxml {i} | grep \"mac address\""
 			a = subprocess.check_output(cmd,shell=True)
@@ -283,6 +283,7 @@ def create_junos_config(d1):
 		p1['ssh_key']=d1['junos_login']['ssh_key']
 	for i in d1['vm'].keys():
 		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter']:
+			print(f"vm {i}")
 			p1['hostname']=i
 			p1['type']= d1['vm'][i]['type']
 			p1['ip_address']=f"{d1['vm'][i]['ip_address']}/{d1['ip_pool']['subnet'].split('/')[1]}"
@@ -291,7 +292,8 @@ def create_junos_config(d1):
 			if 'lo0' in d1['vm'][i]:
 				p1['interfaces'] = {'lo0' : d1['vm'][i]['lo0']['family'] }
 			else:
-				p1['interfaces'] = None
+				p1['interfaces'] = {}
+			print(p1)
 			for j in list(d1['vm'][i]['port'].keys()):
 			 	p1['interfaces'].update({j : d1['vm'][i]['port'][j]})
 			#pprint.pprint(p1)
@@ -454,6 +456,7 @@ def check_argv(argv):
 							'vjunosrouter':f"{'/'.join(t1)}/vjunosrouter.j2",
 							'sonic':f"{'/'.join(t1)}/sonic.j2",
 							'vjunosevolved':f"{'/'.join(t1)}/vjunosevolved.j2",
+							'aoscx':f"{'/'.join(t1)}/aoscx.j2",
 							"ssh_config" : f"{'/'.join(t1)}/ssh_config.j2"
 				}
 				retval['DEST_DIR'] = './result'
@@ -635,6 +638,49 @@ def define_vm(d1):
 				data1['disk']=disk
 				data1['vcpu']=4
 				data1['ram']=5120
+				data1['cpu_model']=cpu_model
+				data1['interfaces']={}
+				if 'type' in d1['mgmt'].keys():
+					if d1['mgmt']['type'] == 'ovs':
+						if 'vlan' in d1['mgmt'].keys():
+							vlantemp = d1['mgmt']['vlan']
+						else:
+							vlantemp = 0
+						data1['interfaces']['mgmt']={
+							'bridge' : d1['mgmt']['bridge'],
+							'index' : 1,
+							'vlan': vlantemp,
+							'ovs': '1' 
+						} 
+				else:
+					data1['interfaces']['mgmt']={
+						'bridge' : d1['mgmt']['bridge'],
+						'index' : 1,
+						'ovs':0
+					}
+				p=2
+				ports= list(d1['vm'][i]['port'].keys())
+				_ =ports.sort()
+				for j in ports:
+					t1=f"ge{j.split('/')[2]}"
+					if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
+					else:
+						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
+					p+=1
+				pprint.pprint(data1)
+				with open(d1['template'][vm_type]) as f1:
+					template1 = f1.read()
+					cmd=Template(template1).render(data1)
+			elif d1['vm'][i]['type'] in  ['aoscx']:
+				#cmd="virsh capabilities"
+				#cpu_model = xmltodict.parse(subprocess.check_output(cmd,shell=True).decode())['capabilities']['host']['cpu']['model'].split("-")[0]
+				cpu_model = "IvyBridge"
+				vm_type = d1['vm'][i]['type']
+				data1['name']=i
+				data1['disk']=disk
+				data1['vcpu']=2
+				data1['ram']=4096
 				data1['cpu_model']=cpu_model
 				data1['interfaces']={}
 				if 'type' in d1['mgmt'].keys():

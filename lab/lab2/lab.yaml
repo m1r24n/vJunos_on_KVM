@@ -4,25 +4,26 @@ disk:
   vjunosswitch: /disk3/vjunos/vJunos-switch-25.2R1.9.qcow2
   vjunosevolved: /disk3/vjunos/vJunosEvolved-25.2R1.8-EVO.qcow2
   vjunosevolved_config: /disk3/vjunos/vjunosevolved_config.img
-vm_dir: /disk3/vm/lab2
+vm_dir: /disk2/vm/lab2
 mgmt:
   bridge: br0
 ovs:
 - pe1_ge0
 - pe2_ge0
 - pe3_ge0
+- pe4_ge0
 junos_login:
   user: admin
   password: pass01
   ssh_key: /home/irzan/.ssh/id_rsa
 ip_pool:
-  subnet: 192.168.110.0/24
-  gateway: 192.168.110.254
-  option-150: 192.168.110.254
+  subnet: 192.168.254.0/24
+  gateway: 192.168.254.254
+  option-150: 192.168.254.254
   dns: 192.168.1.1
   range: 
-    min: 192.168.110.1
-    max: 192.168.110.200
+    min: 192.168.254.1
+    max: 192.168.254.200
 fabric:
   ipv4_prefix: 10.1.100.0/24
   #ipv6_prefix: fc00:dead:beef:ffff:ffff::/80
@@ -33,11 +34,13 @@ fabric:
   - [pe2,ge-0/0/2,p2,ge-0/0/1,0x1cd]
   - [pe3,ge-0/0/1,p1,ge-0/0/2,0x1cd]
   - [pe3,ge-0/0/2,p2,ge-0/0/2,0x1cd]
-  - [p1,ge-0/0/3,p2,ge-0/0/3,0x1cd]
+  - [pe4,ge-0/0/1,p1,ge-0/0/3,0x1cd]
+  - [pe4,ge-0/0/2,p2,ge-0/0/3,0x1cd]
+  - [p1,ge-0/0/4,p2,ge-0/0/4,0x1cd]
 vm:
   pe1:
     type: vjunosrouter  
-    ip_address: 192.168.110.11
+    ip_address: 192.168.254.11
     lo0:
       family:
         inet: 10.1.255.1
@@ -49,7 +52,7 @@ vm:
         bridge: pe1_ge0
   pe2:
     type: vjunosrouter  
-    ip_address: 192.168.110.12
+    ip_address: 192.168.254.12
     lo0:
       family:
         inet: 10.1.255.2
@@ -61,7 +64,7 @@ vm:
         bridge: pe2_ge0
   pe3:
     type: vjunosrouter  
-    ip_address: 192.168.110.13
+    ip_address: 192.168.254.13
     lo0:
       family:
         inet: 10.1.255.3
@@ -71,9 +74,21 @@ vm:
     port:
       ge-0/0/0: 
         bridge: pe3_ge0
+  pe4:
+    type: vjunosrouter  
+    ip_address: 192.168.254.14
+    lo0:
+      family:
+        inet: 10.1.255.4
+        iso: 49.0001.0001.0004.00
+      protocol:
+        isis: yes
+    port:
+      ge-0/0/0: 
+        bridge: pe4_ge0
   p1:
     type: vjunosrouter  
-    ip_address: 192.168.110.14
+    ip_address: 192.168.254.15
     lo0:
       family:
         inet: 10.1.255.11
@@ -83,7 +98,7 @@ vm:
     port: {}
   p2:
     type: vjunosrouter  
-    ip_address: 192.168.110.15
+    ip_address: 192.168.254.16
     lo0:
       family:
         inet: 10.1.255.12

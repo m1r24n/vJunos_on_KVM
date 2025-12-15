@@ -1,0 +1,56 @@
+---
+disk: 
+  vjunosrouter: /disk3/vjunos/vJunos-router-25.2R1.9.qcow2
+  vjunosswitch: /disk3/vjunos/vJunos-switch-25.2R1.9.qcow2
+  vjunosevolved: /disk3/vjunos/vJunosEvolved-25.2R1.8-EVO.qcow2
+  aoscx: /disk3/images/arubaoscx-disk-image.qcow2
+  #vjunosevolved: /disk3/vjunos/vJunosEvolved-24.2R2.6-EVO.qcow2
+  #vjunosevolvedbx: /disk3/vjunos/
+  vjunosevolved_config: /disk3/vjunos/vjunosevolved_config.img
+vm_dir: /disk3/vm/lab4
+mgmt:
+  bridge: br0
+ovs:
+- sw1_ge0
+- sw2_ge0
+- sw3_ge0
+junos_login:
+  user: admin
+  password: pass01
+  ssh_key_name: id_rsa
+ip_pool:
+  subnet: 192.168.254.0/24
+  gateway: 192.168.254.254
+  option-150: 192.168.254.254
+  dns: 192.168.1.1
+  range: 
+    min: 192.168.254.1
+    max: 192.168.254.200
+fabric:
+  ipv4_prefix: 10.1.100.0/24
+  #ipv6_prefix: fc00:dead:beef:ffff:ffff::/80
+  topology:
+  - [sw1,ge-0/0/1,sw2,ge-0/0/1,0x0]
+  - [sw1,ge-0/0/2,sw3,ge-0/0/1,0x0]
+  - [sw2,ge-0/0/2,sw3,ge-0/0/2,0x0]
+
+vm:
+  sw1:
+    type: vjunosswitch
+    ip_address: 192.168.254.11
+    port:
+      ge-0/0/0: 
+        bridge: sw1_et0
+  sw2:
+    type: vjunosswitch
+    ip_address: 192.168.254.12
+    port:
+      ge-0/0/0: 
+        bridge: sw2_et0
+  sw3:
+    type: aoscx
+    ip_address: 192.168.254.13
+    port:
+      ge-0/0/0: 
+        bridge: sw3_et0
+  

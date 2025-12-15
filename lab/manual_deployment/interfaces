@@ -1,0 +1,8 @@
+auto eth0
+iface eth0 inet static
+    address 10.1.102.11/24
+    gateway 10.1.102.1
+    mtu 1500
+iface eth0 inet6 static
+    address fc00:Dead:beef:102::1000:1/64
+    gateway fc00:Dead:beef:102::1

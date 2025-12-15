@@ -1,0 +1,84 @@
+# R1 configuration
+set interfaces ge-0/0/0 flexible-vlan-tagging
+set interfaces ge-0/0/0 encapsulation flexible-ethernet-services
+set interfaces ge-0/0/0 unit 101 vlan-id 101
+set interfaces ge-0/0/0 unit 101 family inet address 10.1.101.1/24
+set interfaces ge-0/0/0 unit 101 family inet6 address fc00:dead:beef:101::1/64
+set interfaces ge-0/0/0 unit 101 family iso
+set interfaces ge-0/0/1 unit 0 family inet6
+set interfaces ge-0/0/1 unit 0 family inet address 10.1.255.0/31
+set interfaces ge-0/0/1 unit 0 family iso
+set interfaces ge-0/0/2 unit 0 family inet6
+set interfaces ge-0/0/2 unit 0 family inet address 10.1.255.2/31
+set interfaces ge-0/0/2 unit 0 family iso
+set interfaces ge-0/0/2 mtu 9000
+set interfaces ge-0/0/1 mtu 9000
+set interfaces lo0 unit 0 family inet6 address fc00:dead:beef:ffff::1
+set interfaces lo0 unit 0 family inet address 10.1.255.101
+set interfaces lo0 unit 0 family iso address 49.0001.0001.0001.00
+set protocols isis interface lo0.0 passive
+set protocols isis interface ge-0/0/0.101 passive
+set protocols isis interface ge-0/0/1.0 point-to-point
+set protocols isis interface ge-0/0/2.0 point-to-point
+set protocols lldp interface ge-0/0/1
+set protocols lldp interface ge-0/0/2
+
+
+# R3 configuration
+set interfaces et-0/0/0 unit 0 family inet6
+set interfaces et-0/0/0 unit 0 family inet address 10.1.255.1/31
+set interfaces et-0/0/0 unit 0 family iso
+set interfaces et-0/0/0 unit 0 family inet6
+set interfaces et-0/0/1 unit 0 family inet address 10.1.255.3/31
+set interfaces et-0/0/1 unit 0 family iso
+set interfaces lo0 unit 0 family inet6 address fc00:dead:beef:ffff::3
+set interfaces lo0 unit 0 family inet address 10.1.255.103
+set interfaces lo0 unit 0 family iso address 49.0001.0001.0003.00
+set protocols isis interface lo0.0 passive
+set protocols isis interface et-0/0/0.0 point-to-point
+set protocols isis interface et-0/0/1.0 point-to-point
+set protocols isis interface ae0.0 point-to-point
+set protocols lldp interface et-0/0/0
+set protocols lldp interface et-0/0/1
+set protocols lldp interface ae0
+
+set interfaces et-0/0/2 ether-options 802.3ad ae0
+set interfaces et-0/0/3 ether-options 802.3ad ae0
+set interfaces ae0 mtu 9000
+set interfaces ae0 aggregated-ether-options lacp active
+set interfaces ae0 unit 0 family inet address 10.1.255.4/31
+set interfaces ae0 unit 0 family iso
+set interfaces ae0 unit 0 family inet6
+set interfaces et-0/0/1 mtu 9000
+set interfaces et-0/0/0 mtu 9000
+set chassis aggregated-devices ethernet device-count 4
+
+
+
+# R2 configuration
+set interfaces lo0 unit 0 family inet6 address fc00:dead:beef:ffff::2
+set interfaces lo0 unit 0 family inet address 10.1.255.102
+set interfaces lo0 unit 0 family iso address 49.0001.0001.0002.00
+set protocols isis interface lo0.0 passive
+set protocols isis interface ae0.0 point-to-point
+set protocols isis interface ge-0/0/0.101 passive
+set interfaces ge-0/0/1 gigether-options 802.3ad ae0
+set interfaces ge-0/0/2 gigether-options 802.3ad ae0
+set interfaces ae0 mtu 9000
+set interfaces ae0 aggregated-ether-options lacp active
+set interfaces ae0 unit 0 family inet address 10.1.255.5/31
+set interfaces ae0 unit 0 family iso
+set interfaces ae0 unit 0 family inet6
+set interfaces ge-0/0/0 flexible-vlan-tagging
+set interfaces ge-0/0/0 encapsulation flexible-ethernet-services
+set interfaces ge-0/0/0 unit 101 vlan-id 101
+set interfaces ge-0/0/0 unit 101 family inet address 10.1.102.1/24
+set interfaces ge-0/0/0 unit 101 family inet6 address fc00:dead:beef:102::1/64
+set interfaces ge-0/0/0 unit 101 family iso
+set chassis aggregated-devices ethernet device-count 4
+set protocols lldp interface ae0
+
+
+
+
+
