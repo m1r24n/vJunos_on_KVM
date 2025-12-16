@@ -15,4 +15,32 @@
         format: text
         load: merge
         vars: "{{ lookup('file', playbook_dir + '/vars_' + inventory_hostname + '.yaml') | from_yaml}}"
+- name: set bgp on p1 as rr
+  hosts:
+  - p1
+  connection: local
+  gather_facts: no
+
+  vars:
+    user: admin
+    password: pass01
+
+  tasks:
+    - name: load bgp configuration
+      juniper.device.config:  
+        load: set
+        lines:
+        - "set routing-options rib inet6.3 static route ::/0 discard"
+        - "set routing-options autonomous-system 4200001000"
+        - "set protocols bgp group to_pe type internal"
+        - "set protocols bgp group to_pe local-address 10.1.255.11"
+        - "set protocols bgp group to_pe passive"
+        - "set protocols bgp group to_pe family inet any"
+        - "set protocols bgp group to_pe family inet-vpn any"
+        - "set protocols bgp group to_pe family inet6 labeled-unicast"
+        - "set protocols bgp group to_pe family inet6-vpn any"
+        - "set protocols bgp group to_pe family evpn signaling"
+        - "set protocols bgp group to_pe cluster 10.1.255.11"
+        - "set protocols bgp group to_pe allow 10.1.255.0/24"
+
 

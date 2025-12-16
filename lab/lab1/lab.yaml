@@ -4,9 +4,9 @@ disk:
   vjunosswitch: /disk3/vjunos/vJunos-switch-25.2R1.9.qcow2
   vjunosevolved: /disk3/vjunos/vJunosEvolved-25.2R1.8-EVO.qcow2
   vjunosevolved_config: /disk3/vjunos/vjunosevolved_config.img
-vm_dir: /disk3/vm/lab1
+vm_dir: /disk2/vm/lab1
 mgmt:
-  bridge: br1
+  bridge: br0
 ovs:
 - r1_ge0
 - r2_ge0
