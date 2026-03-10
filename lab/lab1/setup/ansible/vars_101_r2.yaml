@@ -1,0 +1,4 @@
+intf: ge-0/0/0
+unit: 101
+myipv4: 192.168.21.254/24
+myipv6: fc00:dead:beef:aa21::1/64

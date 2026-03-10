@@ -73,8 +73,10 @@ iface {{i}} inet6 static
 ipv6 forwarding
 !
 interface eth1
+{% if nd_prefix -%}
 ipv6 nd prefix {{nd_prefix}}
 no ipv6 nd suppress-ra
+{% endif %}
 exit
 router bgp {{asn}}
 no bgp ebgp-requires-policy
@@ -82,11 +84,16 @@ neighbor {{peerv4}} remote-as {{peerasn}}
 neighbor {{peerv6}} remote-as {{peerasn}}
 !
 address-family ipv4 unicast
+{% if advv4 -%}
 network {{advv4}}
+{% endif %}
+
 exit-address-family
 !
 address-family ipv6 unicast
+{% if advv6 -%}
 network {{advv6}}
+{% endif %}
 neighbor {{peerv6}} activate
 exit-address-family
 exit
@@ -169,14 +176,15 @@ local=/local.lan/
                 result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                 output1 = result.stdout
                 os.remove("frr.conf")
-                dns_data = d1['lxc'][i]['dnsmasq']
-                dns_cfg = dns1.render(dns_data)
-                with open("dnsmasq.conf","w") as f1:
-                    f1.write(dns_cfg)
-                cmd = ["lxc", "file" , "push", "dnsmasq.conf",  f"{i}/etc/dnsmasq.conf"]
-                result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-                output1 = result.stdout
-                os.remove("dnsmasq.conf")
+                if 'dnsmasq' in d1['lxc'][i].keys():
+                    dns_data = d1['lxc'][i]['dnsmasq']
+                    dns_cfg = dns1.render(dns_data)
+                    with open("dnsmasq.conf","w") as f1:
+                        f1.write(dns_cfg)
+                    cmd = ["lxc", "file" , "push", "dnsmasq.conf",  f"{i}/etc/dnsmasq.conf"]
+                    result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                    output1 = result.stdout
+                    os.remove("dnsmasq.conf")
 
 
             

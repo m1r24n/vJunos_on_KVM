@@ -72,7 +72,7 @@ Dhcp4:
     type: string
   - array: true
     code: 150
-    name: tftp-server-address
+    name: ztp-servers
     space: dhcp4
     type: ipv4-address
   rebind-timer: 1800
@@ -91,6 +91,8 @@ Dhcp4:
     - data: tftp
       name: transfer-mode
       space: vendor-encapsulated-options-space
+    - data: {{ i }}.conf
+      name: boot-file-name
   {% endfor %}
   subnet4:
   - id: 1
@@ -98,9 +100,11 @@ Dhcp4:
     - data: {{ gateway }}
       name: routers
     - data: {{ option150 }}
-      name: tftp-server-address
+      name: ztp-servers
     - data: {{ dns }}
       name: domain-name-servers
+    - data: {{ gateway }}
+      name: tftp-server-name
     pools:
     - pool: {{ range_min }} - {{ range_max }}
     subnet: {{ subnet }}

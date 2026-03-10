@@ -1,0 +1,44 @@
+---
+disk: 
+  vjunosrouter: /disk3/vjunos/vJunos-router-25.4R1.12.qcow2
+vm_dir: /disk2/vm/bng
+mgmt:
+  bridge: br0
+ovs:
+- bng1_ge0
+- bng1_ge2
+junos_login:
+  user: admin
+  password: pass01
+  ssh_key_name: id_rsa
+ip_pool:
+  subnet: 192.168.250.0/24
+  gateway: 192.168.250.254
+  option-150: 192.168.250.254
+  dns: 192.168.1.1
+  range: 
+    min: 192.168.250.1
+    max: 192.168.250.200
+# fabric:
+#   ipv4_prefix: 10.1.100.0/24
+#   #ipv6_prefix: fc00:dead:beef:ffff:ffff::/80
+#   topology:
+#   - [r1,ge-0/0/1,r2,ge-0/0/1,0xf]
+#   - [r1,ge-0/0/2,r3,ge-0/0/1,0xf]
+#   - [r2,ge-0/0/2,r3,ge-0/0/2,0xf]
+vm:
+  bng1:
+    type: vjunosrouter  
+    ip_address: 192.168.250.11
+    port:
+      ge-0/0/0: 
+        bridge: bng1_ge0
+      ge-0/0/1: 
+        bridge: br1
+        family:
+          inet: 192.168.251.101/24
+      ge-0/0/2: 
+        bridge: bng1_ge2
+
+
+

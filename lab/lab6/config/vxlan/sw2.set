@@ -1,0 +1,47 @@
+
+set groups l3config_ospf_ipv4 interfaces ge-0/0/0 mtu 9000
+set groups l3config_ospf_ipv4 interfaces ge-0/0/0 unit 0 family inet address 10.1.255.129/31
+set groups l3config_ospf_ipv4 interfaces ge-0/0/1 mtu 9000
+set groups l3config_ospf_ipv4 interfaces ge-0/0/1 unit 0 family inet address 10.1.255.131/31
+set groups l3config_ospf_ipv4 interfaces lo0 unit 0 family inet address 10.1.255.2/32
+set groups l3config_ospf_ipv4 interfaces ge-0/0/4 unit 0 family ethernet-switching interface-mode trunk
+set groups l3config_ospf_ipv4 interfaces ge-0/0/4 unit 0 family ethernet-switching vlan members all
+set groups l3config_ospf_ipv4 policy-options policy-statement LB then load-balance per-flow
+set groups l3config_ospf_ipv4 routing-instances evpn-1 instance-type mac-vrf
+set groups l3config_ospf_ipv4 routing-instances evpn-1 protocols evpn encapsulation vxlan
+set groups l3config_ospf_ipv4 routing-instances evpn-1 protocols evpn default-gateway do-not-advertise
+set groups l3config_ospf_ipv4 routing-instances evpn-1 protocols evpn duplicate-mac-detection auto-recovery-time 9
+set groups l3config_ospf_ipv4 routing-instances evpn-1 protocols evpn extended-vni-list all
+set groups l3config_ospf_ipv4 routing-instances evpn-1 protocols evpn vni-options vni 10011 vrf-target target:10011:1
+set groups l3config_ospf_ipv4 routing-instances evpn-1 protocols evpn vni-options vni 10012 vrf-target target:10012:1
+set groups l3config_ospf_ipv4 routing-instances evpn-1 protocols evpn vni-options vni 10013 vrf-target target:10013:1
+set groups l3config_ospf_ipv4 routing-instances evpn-1 vtep-source-interface lo0.0
+set groups l3config_ospf_ipv4 routing-instances evpn-1 service-type vlan-aware
+set groups l3config_ospf_ipv4 routing-instances evpn-1 interface ge-0/0/4.0
+set groups l3config_ospf_ipv4 routing-instances evpn-1 route-distinguisher 10.1.255.2:1001
+set groups l3config_ospf_ipv4 routing-instances evpn-1 vrf-target target:1000:1001
+set groups l3config_ospf_ipv4 routing-instances evpn-1 vlans vlan11 description vlan11
+set groups l3config_ospf_ipv4 routing-instances evpn-1 vlans vlan11 vlan-id 11
+set groups l3config_ospf_ipv4 routing-instances evpn-1 vlans vlan11 no-arp-suppression
+set groups l3config_ospf_ipv4 routing-instances evpn-1 vlans vlan11 vxlan vni 10011
+set groups l3config_ospf_ipv4 routing-instances evpn-1 vlans vlan12 description vlan12
+set groups l3config_ospf_ipv4 routing-instances evpn-1 vlans vlan12 vlan-id 12
+set groups l3config_ospf_ipv4 routing-instances evpn-1 vlans vlan12 no-arp-suppression
+set groups l3config_ospf_ipv4 routing-instances evpn-1 vlans vlan12 vxlan vni 10012
+set groups l3config_ospf_ipv4 routing-instances evpn-1 vlans vlan13 description vlan13
+set groups l3config_ospf_ipv4 routing-instances evpn-1 vlans vlan13 vlan-id 13
+set groups l3config_ospf_ipv4 routing-instances evpn-1 vlans vlan13 no-arp-suppression
+set groups l3config_ospf_ipv4 routing-instances evpn-1 vlans vlan13 vxlan vni 10013
+set groups l3config_ospf_ipv4 routing-options router-id 10.1.255.2
+set groups l3config_ospf_ipv4 routing-options autonomous-system 4200000001
+set groups l3config_ospf_ipv4 routing-options forwarding-table export LB
+set groups l3config_ospf_ipv4 routing-options forwarding-table chained-composite-next-hop ingress evpn
+set groups l3config_ospf_ipv4 protocols bgp group to_other type internal
+set groups l3config_ospf_ipv4 protocols bgp group to_other local-address 10.1.255.2
+set groups l3config_ospf_ipv4 protocols bgp group to_other family evpn signaling
+set groups l3config_ospf_ipv4 protocols bgp group to_other neighbor 10.1.255.1
+set groups l3config_ospf_ipv4 protocols ospf area 0.0.0.0 interface lo0.0 passive
+set groups l3config_ospf_ipv4 protocols ospf area 0.0.0.0 interface ge-0/0/0.0 interface-type p2p
+set groups l3config_ospf_ipv4 protocols ospf area 0.0.0.0 interface ge-0/0/1.0 interface-type p2p
+set groups l3config_ospf_ipv4 protocols lldp interface all
+set apply-groups l3config_ospf_ipv4

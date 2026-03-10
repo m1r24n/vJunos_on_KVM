@@ -87,25 +87,20 @@ lxc:
         ipv4: 192.168.30.254/24
         ipv6: fc00:dead:beef:aa30::1/64
         bridge: s3-cust1
-  cl41-cust1:
-    type: client
-    ports:
-      eth0:
-        bridge: s4-cust1
-  ce4-cust1:
+  igw-cust1:
     type: router
     bgp: 
       asn: 4200000004
       peerasn: 4200001000
       peerv4: 172.16.255.6
       peerv6: fc00:dead:beef:ffff::6
-      nd_prefix: fc00:dead:beef:aa40::/64
-      advv4:  192.168.40.0/24
-      advv6: fc00:dead:beef:aa40::/64
-    dnsmasq:
-      range: "192.168.40.1,192.168.40.100"
-      router: 192.168.40.254
-      dns: 192.168.40.254
+      # nd_prefix: fc00:dead:beef:aa40::/64
+      # advv4:  192.168.40.0/24
+      # advv6: fc00:dead:beef:aa40::/64
+    # dnsmasq:
+    #   range: "192.168.40.1,192.168.40.100"
+    #   router: 192.168.40.254
+    #   dns: 192.168.40.254
     ports:
       eth0:
         ipv4: 172.16.255.7/31
@@ -113,6 +108,6 @@ lxc:
         bridge: pe4_ge0
         vlan: 101
       eth1:
-        ipv4: 192.168.40.254/24
-        ipv6: fc00:dead:beef:aa40::1/64
-        bridge: s4-cust1
+        ipv4: 192.168.251.4/24
+        ipv6: fc00:dead:beef:a251::1/64
+        bridge: br1

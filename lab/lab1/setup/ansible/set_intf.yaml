@@ -14,4 +14,4 @@
         template: set_intf.j2
         format: text
         load: merge
-        vars: "{{ lookup('file', playbook_dir + '/vars_' + inventory_hostname + '.yaml') | from_yaml}}"
+        vars: "{{ lookup('file', playbook_dir + '/vars_102_' + inventory_hostname + '.yaml') | from_yaml}}"

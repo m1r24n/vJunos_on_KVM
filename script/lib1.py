@@ -12,22 +12,23 @@ import pathlib
 
 
 def check_config(d1):
-	num_link = len(d1['fabric']['topology'])
-	# set bridge
-	for i in range(num_link):
-		br='ptp' + str(i)
-		d1['fabric']['topology'][i].append(br)
-	#pprint.pprint(d1['fabric']['topology'])
-	for i in d1['fabric']['topology']:
-		vm1 = i[0]
-		intf1 = i[1]
-		vm2 = i[2]
-		intf2 = i[3]
-		d1['vm'][vm1]['port'].update({intf1 : {'bridge' : i[5] }})
-		d1['vm'][vm2]['port'].update({intf2 : {'bridge' : i[5] }})
-	#pprint.pprint(d1['vm'])
-	sort_port(d1)
-	add_address2intf(d1)
+	if 'fabric' in d1.keys():
+		num_link = len(d1['fabric']['topology'])
+		# set bridge
+		for i in range(num_link):
+			br='ptp' + str(i)
+			d1['fabric']['topology'][i].append(br)
+		#pprint.pprint(d1['fabric']['topology'])
+		for i in d1['fabric']['topology']:
+			vm1 = i[0]
+			intf1 = i[1]
+			vm2 = i[2]
+			intf2 = i[3]
+			d1['vm'][vm1]['port'].update({intf1 : {'bridge' : i[5] }})
+			d1['vm'][vm2]['port'].update({intf2 : {'bridge' : i[5] }})
+		#pprint.pprint(d1['vm'])
+		sort_port(d1)
+		add_address2intf(d1)
 	add_ssh_key(d1)
 	
 			
@@ -201,7 +202,7 @@ def set_bridge(d1):
 	intf_list=[]
 	bridge_list=[]
 	for i in t1:
-		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','aoscx']:
+		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','vaoscx']:
 			vm.append(i)
 	for i in vm:
 		cmd = f"virsh domiflist {i} | tail -n +4"
@@ -247,7 +248,7 @@ def get_mac_fxp0(d1):
 	vm = d1['vm'].keys()
 	for i in vm:
 		# if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
-		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','aoscx']:
+		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','vaoscx']:
 			#print(f"vm {i}")
 			cmd=f"virsh dumpxml {i} | grep \"mac address\""
 			a = subprocess.check_output(cmd,shell=True)
@@ -273,16 +274,22 @@ def add_ssh_key(d1):
 	# 	print(e)
 	# 	exit()
 
-def create_junos_config(d1):
+def create_netdev_config(d1):
 	with open(d1['template']['junos']) as f:
-		j2 = f.read()
+		junos_template = f.read()
+	with open(d1['template']['aoscx']) as f:
+		aoscx_template = f.read()
 	p1 = {}
 	p1['junos_user']=d1['junos_login']['user']
+	p1['username']='admin'
+	p1['password']=d1['junos_login']['password']
+	# print(f"password : {d1['junos_login']['password']}")
+	# print(f"password : {p1['password']}")
 	p1['junos_passwd']=md5_crypt.hash(d1['junos_login']['password'])
 	if 'ssh_key' in d1['junos_login'].keys():
 		p1['ssh_key']=d1['junos_login']['ssh_key']
 	for i in d1['vm'].keys():
-		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter']:
+		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','vaoscx']:
 			print(f"vm {i}")
 			p1['hostname']=i
 			p1['type']= d1['vm'][i]['type']
@@ -293,12 +300,14 @@ def create_junos_config(d1):
 				p1['interfaces'] = {'lo0' : d1['vm'][i]['lo0']['family'] }
 			else:
 				p1['interfaces'] = {}
-			print(p1)
+			#print(p1)
 			for j in list(d1['vm'][i]['port'].keys()):
 			 	p1['interfaces'].update({j : d1['vm'][i]['port'][j]})
 			#pprint.pprint(p1)
-
-			config1=Template(j2).render(p1)
+			if d1['vm'][i]['type'] == 'vaoscx':
+				config1=Template(aoscx_template).render(p1)
+			else:
+				config1=Template(junos_template).render(p1)
 			if not os.path.exists(d1['DEST_DIR']):
 				os.makedirs(d1['DEST_DIR'])
 			# else:
@@ -379,12 +388,13 @@ def create_dhcp_config_v2(d1):
 	p1['vm'] = {}
 	for i in d1['vm'].keys():
 		# if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
-		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic']:
+		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','vaoscx']:
 			if d1['vm'][i]['type'] == 'sonic':
 				p1['vm'].update({i : {'hostname': i,'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address'],'conf' : 0}})
 			else:
 				p1['vm'].update({i : {'hostname': i,'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address'],'conf' : 1}})
     #print(p1)
+	#print(j2)
 	config1=Template(j2).render(p1)
 	kea4=yaml.load(config1,Loader=yaml.FullLoader)
 	kea4_json = json.dumps(kea4,indent=2)
@@ -418,8 +428,8 @@ def create_config(d1):
 	print("getting mac address info")
 	get_mac_fxp0(d1)
 	#print(d1)
-	print("writing junos config")
-	create_junos_config(d1)
+	print("writing configuration for the network devices")
+	create_netdev_config(d1)
 	print("Creating dhcpd config")
 
 	create_dhcp_config(d1)
@@ -456,6 +466,7 @@ def check_argv(argv):
 							'vjunosrouter':f"{'/'.join(t1)}/vjunosrouter.j2",
 							'sonic':f"{'/'.join(t1)}/sonic.j2",
 							'vjunosevolved':f"{'/'.join(t1)}/vjunosevolved.j2",
+							'vaoscx':f"{'/'.join(t1)}/vaoscx.j2",
 							'aoscx':f"{'/'.join(t1)}/aoscx.j2",
 							"ssh_config" : f"{'/'.join(t1)}/ssh_config.j2"
 				}
@@ -672,7 +683,7 @@ def define_vm(d1):
 				with open(d1['template'][vm_type]) as f1:
 					template1 = f1.read()
 					cmd=Template(template1).render(data1)
-			elif d1['vm'][i]['type'] in  ['aoscx']:
+			elif d1['vm'][i]['type'] in  ['vaoscx']:
 				#cmd="virsh capabilities"
 				#cpu_model = xmltodict.parse(subprocess.check_output(cmd,shell=True).decode())['capabilities']['host']['cpu']['model'].split("-")[0]
 				cpu_model = "IvyBridge"
@@ -683,6 +694,7 @@ def define_vm(d1):
 				data1['ram']=4096
 				data1['cpu_model']=cpu_model
 				data1['interfaces']={}
+				# print(f"vm {i}")
 				if 'type' in d1['mgmt'].keys():
 					if d1['mgmt']['type'] == 'ovs':
 						if 'vlan' in d1['mgmt'].keys():
@@ -705,7 +717,8 @@ def define_vm(d1):
 				ports= list(d1['vm'][i]['port'].keys())
 				_ =ports.sort()
 				for j in ports:
-					t1=f"ge{j.split('/')[2]}"
+					#t1=f"ge{j.split('/')[2]}"
+					t1=j
 					if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
 						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
 					else:

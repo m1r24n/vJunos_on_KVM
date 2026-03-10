@@ -1,0 +1,32 @@
+---
+lxc:
+  cl11:
+    type: client
+    ports:
+      eth0:
+        ipv4: 192.168.11.1/24
+        gw4: 192.168.11.254
+        ipv6: fc00:dead:beef:aa11::1000:1/64
+        gw6: fc00:dead:beef:aa11::1
+        bridge: r1_ge0
+        vlan: 101
+  cl21:
+    type: client
+    ports:
+      eth0:
+        ipv4: 192.168.21.1/24
+        gw4: 192.168.21.254
+        ipv6: fc00:dead:beef:aa21::1000:1/64
+        gw6: fc00:dead:beef:aa21::1
+        bridge: r2_ge0
+        vlan: 101
+  cl31:
+    type: client
+    ports:
+      eth0:
+        ipv4: 192.168.31.1/24
+        gw4: 192.168.31.254
+        ipv6: fc00:dead:beef:aa31::1000:1/64
+        gw6: fc00:dead:beef:aa31::1
+        bridge: r3_ge0
+        vlan: 101
