@@ -1,0 +1,22 @@
+
+set interfaces ge-0/0/0 unit 0 family inet address 10.1.0.1/31
+set interfaces ge-0/0/1 unit 0 family inet address 10.1.0.3/31
+
+set interfaces irb unit 21 family inet address 10.1.21.1/24
+set interfaces irb unit 22 family inet address 10.1.22.1/24
+set interfaces lo0 unit 0 family inet address 10.1.255.2/32
+set policy-options policy-statement from_local term 1 from route-filter 10.1.21.0/24 orlonger
+set policy-options policy-statement from_local term 1 from route-filter 10.1.22.0/24 orlonger
+set policy-options policy-statement from_local term 1 then accept
+set routing-options autonomous-system 4200000002
+set protocols bgp group to_sw1 export from_local
+set protocols bgp group to_sw1 neighbor 10.1.0.0 peer-as 4200000001
+set protocols bgp group to_sw1 neighbor 10.1.0.2 peer-as 4200000001
+set vlans vlan11 vlan-id 21
+set vlans vlan11 l3-interface irb.21
+set vlans vlan12 vlan-id 21
+set vlans vlan12 l3-interface irb.22
+set interfaces ge-0/0/4 unit 0 family ethernet-switching interface-mode trunk
+set interfaces ge-0/0/4 unit 0 family ethernet-switching vlan members all
+
+
