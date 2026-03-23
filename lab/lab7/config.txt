@@ -20,3 +20,17 @@ set interfaces ge-0/0/4 unit 0 family ethernet-switching interface-mode trunk
 set interfaces ge-0/0/4 unit 0 family ethernet-switching vlan members all
 
 
+
+router bgp 4200000004
+ no bgp ebgp-requires-policy
+ neighbor 10.1.0.4 remote-as 4200000003
+ neighbor 10.1.0.6 remote-as 4200000003
+ !
+ address-family ipv4 unicast
+  network 10.1.41.0/24
+  network 10.1.42.0/24
+ exit-address-family
+exit
+
+
+
