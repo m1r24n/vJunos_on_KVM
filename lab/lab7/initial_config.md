@@ -93,31 +93,31 @@
 
 
 
-service integrated-vtysh-config
-!
-no ip prefix-list DEFAULT_IPV4 seq 5 permit 0.0.0.0/0
-no ip prefix-list PL_LoopbackV4 seq 5 permit 10.1.0.1/32
-!
-no ipv6 prefix-list DEFAULT_IPV6 seq 5 permit ::/0
-!
-no route-map ALLOW_LIST_DEPLOYMENT_ID_0_V4
-!
-no route-map ALLOW_LIST_DEPLOYMENT_ID_0_V6
-!
-no route-map CHECK_IDF_ISOLATION
+    service integrated-vtysh-config
+    !
+    no ip prefix-list DEFAULT_IPV4 seq 5 permit 0.0.0.0/0
+    no ip prefix-list PL_LoopbackV4 seq 5 permit 10.1.0.1/32
+    !
+    no ipv6 prefix-list DEFAULT_IPV6 seq 5 permit ::/0
+    !
+    no route-map ALLOW_LIST_DEPLOYMENT_ID_0_V4
+    !
+    no route-map ALLOW_LIST_DEPLOYMENT_ID_0_V6
+    !
+    no route-map CHECK_IDF_ISOLATION
 
-!
-no route-map FROM_BGP_PEER_V4
-!
-rno oute-map FROM_BGP_PEER_V4
-!
-no route-map FROM_BGP_PEER_V4 
-no route-map FROM_BGP_PEER_V6
-no route-map RM_SET_SRC
-no route-map TO_BGP_PEER_V4
-no route-map TO_BGP_PEER_V6
-!
-no bgp community-list standard allow_list_default_community
-no ip protocol bgp route-map RM_SET_SRC
-ip nht resolve-via-default
-ipv6 nht resolve-via-default
+    !
+    no route-map FROM_BGP_PEER_V4
+    !
+    rno oute-map FROM_BGP_PEER_V4
+    !
+    no route-map FROM_BGP_PEER_V4 
+    no route-map FROM_BGP_PEER_V6
+    no route-map RM_SET_SRC
+    no route-map TO_BGP_PEER_V4
+    no route-map TO_BGP_PEER_V6
+    !
+    no bgp community-list standard allow_list_default_community
+    no ip protocol bgp route-map RM_SET_SRC
+    ip nht resolve-via-default
+    ipv6 nht resolve-via-default
