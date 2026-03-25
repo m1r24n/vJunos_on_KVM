@@ -1,5 +1,5 @@
 virt-install --name {{name}} --disk {{disk}},device=disk \
-    --cpu {{cpu_model}},+vmx \
+    --cpu host-passthrough \
     --ram {{ram}} --vcpu {{vcpu}}  \
     --osinfo debian12 \
 {% for intf in interfaces -%}
