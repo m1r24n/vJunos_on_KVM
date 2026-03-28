@@ -44,16 +44,16 @@
 
 # configuration for SW3     
 
-    sudo config interface ip add Ethernet0 10.1.0.4/31
-    sudo config interface ip add Ethernet4 10.1.0.6/31
-    sudo config interface ip remove Loopback0 10.1.0.1/32
-    sudo config interface ip add Loopback0 10.1.255.3/32
-    sudo config vlan add 31
-    sudo config vlan add 32
-    sudo config interface ip add Vlan31 10.1.31.1/24
-    sudo config interface ip add Vlan32 10.1.32.1/24
-    sudo config vlan  member add 31  Ethernet16
-    sudo config vlan  member add 32  Ethernet16
+        sudo config interface ip add Ethernet0 10.1.0.4/31
+        sudo config interface ip add Ethernet4 10.1.0.6/31
+        sudo config interface ip remove Loopback0 10.1.0.1/32
+        sudo config interface ip add Loopback0 10.1.255.3/32
+        sudo config vlan add 31
+        sudo config vlan add 32
+        sudo config interface ip add Vlan31 10.1.31.1/24
+        sudo config interface ip add Vlan32 10.1.32.1/24
+        sudo config vlan  member add 31  Ethernet16
+        sudo config vlan  member add 32  Ethernet16
 
     router bgp 4200000003
         no bgp ebgp-requires-policy

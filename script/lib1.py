@@ -6,6 +6,7 @@ from jinja2 import Template
 import os
 import json
 from passlib.hash import md5_crypt
+from pathlib import Path
 import xmltodict
 import pprint
 import pathlib
@@ -950,7 +951,15 @@ def create_vm(d1):
 		define_vm(d1)
 	else:
 		print("VMs are OK")
-	
+
+def delete_known_hosts(d1):
+	print("deleting entry from ~/.ssh/known_hosts")
+	ip_list = []
+	home_dir = Path.home()
+	for i in d1['vm'].keys():
+		ipaddr=d1['vm'][i]['ip_address']
+		cmd1 = f"ssh-keygen -f '{home_dir}/.ssh/known_hosts' -R '{ipaddr}'"
+		subprocess.check_output(cmd1,shell=True)
 
 def start_vm(d1):
 	if d1['vm_not_defined']:

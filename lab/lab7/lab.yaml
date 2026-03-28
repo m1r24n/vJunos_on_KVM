@@ -1,14 +1,14 @@
 ---
 disk: 
-  vjunosrouter: /disk3/images/vJunos-router-25.2R1.9.qcow2
-  vjunosswitch: /disk3/images/vJunos-switch-25.4R1.12.qcow2
-  vjunosevolved: /disk3/images/vJunosEvolved-25.2R1.8-EVO.qcow2
-  vaoscx: /disk3/images/arubaoscx-disk-image.qcow2
-  sonic: /disk3/images/sonic-vm.qcow2
-  #vjunosevolved: /disk3/vjunos/vJunosEvolved-24.2R2.6-EVO.qcow2
-  #vjunosevolvedbx: /disk3/vjunos/
-  vjunosevolved_config: /disk3/vjunos/vjunosevolved_config.img
-vm_dir: /disk3/vm/lab7
+  vjunosrouter: /vm/images/vJunos-router-25.2R1.9.qcow2
+  vjunosswitch: /vm/images/vJunos-switch-25.4R1.12.qcow2
+  vjunosevolved: /vm/images/vJunosEvolved-25.2R1.8-EVO.qcow2
+  vaoscx: /vm/images/arubaoscx-disk-image.qcow2
+  sonic: /vm/images/sonic-vm.qcow2
+  #vjunosevolved: /vm/vjunos/vJunosEvolved-24.2R2.6-EVO.qcow2
+  #vjunosevolvedbx: /vm/vjunos/
+  vjunosevolved_config: /vm/vjunos/vjunosevolved_config.img
+vm_dir: /vm//lab7
 mgmt:
   bridge: br0
 ovs:
