@@ -274,6 +274,7 @@ def add_ssh_key(d1):
 	# except Exception as e:
 	# 	print(e)
 	# 	exit()
+	# adding configuration for loopback
 
 def create_netdev_config(d1):
 	with open(d1['template']['junos']) as f:
@@ -532,13 +533,14 @@ def list_of_bridge(d1):
 	for i in d1['vm'].keys():
 		for j in d1['vm'][i]['port'].keys():
 			#print(j)
-			if 'bridge' in d1['vm'][i]['port'][j].keys():
-				b1 = d1['vm'][i]['port'][j]['bridge']
-				if b1 not in list_bridge:
-					list_bridge.append(b1)
-			else:
-				print(f"vm {i} interface {j} doesn't have bridge parameter")
-				exit()
+			if j != "lo0":
+				if 'bridge' in d1['vm'][i]['port'][j].keys():
+					b1 = d1['vm'][i]['port'][j]['bridge']
+					if b1 not in list_bridge:
+						list_bridge.append(b1)
+				else:
+					print(f"vm {i} interface {j} doesn't have bridge parameter")
+					exit()
 	return list_bridge
 
 
@@ -674,12 +676,13 @@ def define_vm(d1):
 				ports= list(d1['vm'][i]['port'].keys())
 				_ =ports.sort()
 				for j in ports:
-					t1=f"ge{j.split('/')[2]}"
-					if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
-						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
-					else:
-						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
-					p+=1
+					if j != 'lo0':
+						t1=f"ge{j.split('/')[2]}"
+						if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
+							data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
+						else:
+							data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
+						p+=1
 				pprint.pprint(data1)
 				with open(d1['template'][vm_type]) as f1:
 					template1 = f1.read()
@@ -774,16 +777,16 @@ def define_vm(d1):
 					template1 = f1.read()
 					cmd=Template(template1).render(data1)
 			elif d1['vm'][i]['type'] == 'vjunosevolved':
-				disk_cfg = d1['vm_dir'] + f"/{i}_cfg.img"
-				cmd = f"cp {d1['disk']['vjunosevolved_config']} {disk_cfg}"
-				print(f"copying file from {d1['disk']['vjunosevolved_config']} to {disk_cfg}")
-				subprocess.check_output(cmd,shell=True)
+				# disk_cfg = d1['vm_dir'] + f"/{i}_cfg.img"
+				# cmd = f"cp {d1['disk']['vjunosevolved_config']} {disk_cfg}"
+				# print(f"copying file from {d1['disk']['vjunosevolved_config']} to {disk_cfg}")
+				# subprocess.check_output(cmd,shell=True)
 				cmd="virsh capabilities"
 				#cpu_model = xmltodict.parse(subprocess.check_output(cmd,shell=True).decode())['capabilities']['host']['cpu']['model'].split("-")[0]
 				cpu_model = "IvyBridge"
 				data1['name']=i
 				data1['disk']=disk
-				data1['disk_config']=disk_cfg
+				# data1['disk_config']=disk_cfg
 				data1['vcpu']=4
 				data1['ram']=8192
 				if 'bx' in d1['vm'][i].keys():
@@ -828,12 +831,13 @@ def define_vm(d1):
 					if j in ['p1','p2','p3','p4']:
 						data1['interfaces'][j]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p}	
 					else:
-						t1=f"et{j.split('/')[2]}"
-						# data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p}
-						if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
-							data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
-						else:
-							data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
+						if j != 'lo0':
+							t1=f"et{j.split('/')[2]}"
+							# data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j],'index':p}
+							if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
+								data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
+							else:
+								data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
 					p+=1
 				# for j in ports:
 				# 	t1=f"ge{j.split('/')[2]}"

@@ -1,5 +1,6 @@
 virt-install --name {{name}} \
     --disk {{disk}},device=disk \
+    --disk {{disk_config}},bus=usb \
     --cpu {{cpu_model}},+vmx \
     --boot uefi,loader_secure=no \
     {% if bx  -%}
