@@ -15,6 +15,7 @@ ovs:
 - r1_ge0
 - r3_ge0
 - r4_et0
+- r5_et0
 
 junos_login:
   user: admin
@@ -38,6 +39,8 @@ fabric:
   - [r2,ge-0/0/3,r3,ge-0/0/2,0xf]
   - [r1,ge-0/0/3,r4,et-0/0/1,0xf]
   - [r3,ge-0/0/3,r4,et-0/0/2,0xf]
+  - [r1,ge-0/0/4,r5,et-0/0/1,0xf]
+  - [r3,ge-0/0/4,r5,et-0/0/2,0xf]
 vm:
   r1:
     type: vjunosrouter
@@ -77,3 +80,13 @@ vm:
         iso: 49.0001.0001.0001.0004.00
       et-0/0/0: 
         bridge: r4_et0
+  r5:
+    type: vjunosevolved
+    ip_address: 192.168.250.105
+    port:
+      lo0:
+        inet: 10.1.255.5/32
+        inet6: fc00:dead:beef:ffff::5/128
+        iso: 49.0001.0001.0001.0004.00
+      et-0/0/0: 
+        bridge: r5_et0
