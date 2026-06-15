@@ -30,9 +30,15 @@ def check_config(d1):
 		#pprint.pprint(d1['vm'])
 		sort_port(d1)
 		add_address2intf(d1)
+		set_router_id(d1)
 	add_ssh_key(d1)
 	
-			
+def set_router_id(d1):
+	for i in d1['vm'].keys():
+		if 'lo0' in d1['vm'][i]['port'].keys():
+			router_id = d1['vm'][i]['port']['lo0']['inet'].split('/')[0]
+			#print(f"router-id {router_id}")
+			d1['vm'][i].update({'router-id': router_id})	
 def ipv4_to_int(ipv4):
 	b1,b2,b3,b4 = ipv4.split('/')[0].split('.')
 	retval = (int(b1) << 24) + (int(b2) << 16) + (int(b3) << 8) + int(b4)
@@ -137,12 +143,38 @@ def add_address2intf(d1):
 					start_ipv6 += 1
 	for i in d1['fabric']['topology']:
 		vm1 = i[0]
+		vm1_type = d1['vm'][vm1]['type']
 		intf1 = i[1]
 		vm2 = i[2]
+		vm2_type = d1['vm'][vm2]['type']
 		intf2 = i[3]
+		prot1 = {
+			'protocols' :
+				{
+					'ospf' : 0,
+					'mpls' : 0,
+					'rsvp' : 0,
+					'ldp' : 0,
+					'ospf3' : 0,
+					'isis' : 0 
+				}
+		}
+		d1['vm'][vm1].update(prot1)
+		d1['vm'][vm2].update(prot1)
+
+		if vm1_type in ['vjunosswitch','vjunosrouter','vjunosevolved'] and vm2_type=='vaoscx':
+			d1['vm'][vm1]['port'][intf1].update({'mtu' : 9014 })
+			d1['vm'][vm2]['port'][intf2].update({'mtu' : 9000 })
+		elif vm1_type=='vaoscx' and vm2_type in ['vjunosswitch','vjunosrouter','vjunosevolved']:
+			d1['vm'][vm1]['port'][intf1].update({'mtu' : 9000 })
+			d1['vm'][vm2]['port'][intf2].update({'mtu' : 9014 })
+		else:
+			d1['vm'][vm1]['port'][intf1].update({'mtu' : 9000 })
+			d1['vm'][vm2]['port'][intf2].update({'mtu' : 9000 })
+
 
 		# mask 
-		# bit 0 : ipv4, 0b000000001, 0x1
+		# bit 0 : ipv4, 0b000000vm1_type = d1['vm'][vm1]['type']001, 0x1
 		# bit 1 : ipv6, 0b000000010, 0x2
 		# bit 2 : iso,  0b000000100, 0x4
 		# bit 3 : isis  0b000001000, 0x8
@@ -157,21 +189,34 @@ def add_address2intf(d1):
 		if i[4] & 0x8:
 			d1['vm'][vm1]['port'][intf1].update({'isis' : 1 })
 			d1['vm'][vm2]['port'][intf2].update({'isis' : 1 })
+			d1['vm'][vm1]['protocols']['isis'] = 1
+			d1['vm'][vm2]['protocols']['isis'] = 1
+
 		if i[4] & 0x10:
 			d1['vm'][vm1]['port'][intf1].update({'ospf' : 1 })
 			d1['vm'][vm2]['port'][intf2].update({'ospf' : 1 })
+			d1['vm'][vm1]['protocols']['ospf'] = 1
+			d1['vm'][vm2]['protocols']['ospf'] = 1
 		if i[4] & 0x20:
 			d1['vm'][vm1]['port'][intf1].update({'ospf3' : 1 })
 			d1['vm'][vm2]['port'][intf2].update({'ospf3' : 1 })
+			d1['vm'][vm1]['protocols']['ospf3'] = 1
+			d1['vm'][vm2]['protocols']['ospf3'] = 1
 		if i[4] & 0x40:
 			d1['vm'][vm1]['port'][intf1].update({'mpls' : 1 })
 			d1['vm'][vm2]['port'][intf2].update({'mpls' : 1 })
+			d1['vm'][vm1]['protocols']['mpls'] = 1
+			d1['vm'][vm2]['protocols']['mpls'] = 1
 		if i[4] & 0x80:
 			d1['vm'][vm1]['port'][intf1].update({'ldp' : 1 })
 			d1['vm'][vm2]['port'][intf2].update({'ldp' : 1 })
+			d1['vm'][vm1]['protocols']['ldp'] = 1
+			d1['vm'][vm2]['protocols']['ldp'] = 1
 		if i[4] & 0x100:
 			d1['vm'][vm1]['port'][intf1].update({'rsvp' : 1 })
 			d1['vm'][vm2]['port'][intf2].update({'rsvp' : 1 })
+			d1['vm'][vm1]['protocols']['rsvp'] = 1
+			d1['vm'][vm2]['protocols']['rspv'] = 1
 	#pprint.pprint(d1)
 	# exit()
 
@@ -297,7 +342,9 @@ def create_netdev_config(d1):
 			p1['type']= d1['vm'][i]['type']
 			p1['ip_address']=f"{d1['vm'][i]['ip_address']}/{d1['ip_pool']['subnet'].split('/')[1]}"
 			p1['gateway']=d1['ip_pool']['gateway']
-			
+			p1['protocols']=d1['vm'][i]['protocols']
+			if 'router-id' in d1['vm'][i].keys():
+				p1['router_id'] = d1['vm'][i]['router-id']
 			if 'lo0' in d1['vm'][i]:
 				p1['interfaces'] = {'lo0' : d1['vm'][i]['lo0']['family'] }
 			else:
@@ -721,13 +768,13 @@ def define_vm(d1):
 				ports= list(d1['vm'][i]['port'].keys())
 				_ =ports.sort()
 				for j in ports:
-					#t1=f"ge{j.split('/')[2]}"
-					t1=j
-					if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
-						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
-					else:
-						data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
-					p+=1
+					if j != 'lo0':
+						t1=f"ge{j.split('/')[2]}"
+						if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
+							data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
+						else:
+							data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
+						p+=1
 				pprint.pprint(data1)
 				with open(d1['template'][vm_type]) as f1:
 					template1 = f1.read()

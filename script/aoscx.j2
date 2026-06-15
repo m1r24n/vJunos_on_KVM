@@ -1,6 +1,7 @@
 hostname {{ hostname }}
 user {{username }} group administrators password plaintext {{password}}
 user {{username }} authorized-key {{ssh_key}}
+ssh public-key-authentication
 no ntp enable
 ssh server vrf mgmt
 vlan 1
@@ -8,3 +9,37 @@ interface mgmt
     no shutdown
     ip static {{ip_address}}
 https-server vrf mgmt
+{% if protocols.ospf -%}
+router ospf 1 
+    {% if router_id -%}
+    router-id {{ router_id }}
+    {% endif -%}
+    area 0.0.0.0
+{% endif -%}
+{% for intf in interfaces -%}
+{% if intf == 'lo0' -%}
+interface loopback 0
+{% else %}
+interface {{ intf }}
+{% endif %}
+    {% if intf != 'lo0' -%}
+    no shutdown
+    {% endif -%}
+    {% if interfaces[intf].mtu -%}
+    mtu {{ interfaces[intf].mtu }}
+    ip mtu {{ interfaces[intf].mtu }}
+    {% endif -%}
+    {% if interfaces[intf].inet -%}
+    ip address {{ interfaces[intf].inet }}
+    {% endif -%}
+    {% if interfaces[intf].inet6 -%}
+    ip address {{ interfaces[intf].inet6 }}
+    {% endif -%}
+    {% if interfaces[intf].ospf -%}
+    ip ospf 1 area 0.0.0.0
+    ip ospf network point-to-point
+    {% endif -%}
+    {% if intf == 'lo0' and protocols.ospf -%}
+    ip ospf 1 area 0.0.0.0 
+    {% endif %}
+{% endfor -%}

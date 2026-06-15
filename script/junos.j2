@@ -74,7 +74,9 @@ interfaces {
     {% for intf in interfaces -%}
     {{ intf }} {
         {% if intf != "lo0" -%}
-        mtu 9000;
+        {% if interfaces[intf].mtu -%}
+        mtu {{ interfaces[intf].mtu }};
+        {% endif -%}
         {% endif -%}
         {% if interfaces[intf].inet or interfaces[intf].inet6 or interfaces[intf].mpls or interfaces[intf].iso -%}
         unit 0 {
@@ -134,6 +136,8 @@ protocols {
         }
         {% endif -%}
     }
+
+    {% if protocols.isis -%}
     isis {
         level 1 disable;
         level 2 wide-metrics-only;
@@ -152,6 +156,9 @@ protocols {
         {% endfor -%}
         
     }
+    {% endif -%}
+
+    {% if protocols.mpls -%}
     mpls {
         {% for intf in interfaces -%}
         {% if intf != "lo0" and interfaces[intf].mpls -%}
@@ -159,6 +166,9 @@ protocols {
         {% endif -%}
         {% endfor -%}
     }
+    {% endif -%}
+
+    {% if protocols.rsvp -%}
     rsvp {
         {% for intf in interfaces -%}
         {% if intf != "lo0" and interfaces[intf].rsvp -%}
@@ -166,6 +176,9 @@ protocols {
         {% endif -%}
         {% endfor -%}   
     }
+    {% endif -%}
+
+    {% if protocols.ldp -%}
     ldp {
         {% for intf in interfaces -%}
         {% if intf != "lo0" and interfaces[intf].ldp -%}
@@ -173,6 +186,27 @@ protocols {
         {% endif -%}
         {% endfor -%}   
     }
+    {% endif -%}
+
+    {% if protocols.ospf -%}
+    ospf {
+        area 0.0.0.0 {
+            {% for intf in interfaces -%}
+            {% if intf == "lo0" -%}
+            interface lo0.0 {
+                passive;
+            }
+            {% else %}
+            {% if interfaces[intf].ospf  -%}
+            interface {{ intf }} {
+                interface-type p2p;
+            }
+            {% endif -%}
+            {% endif -%}
+            {% endfor %}
+        }
+    }
+    {% endif %}
 }
 
 
