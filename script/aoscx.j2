@@ -1,6 +1,7 @@
 hostname {{ hostname }}
 user {{username }} group administrators password plaintext {{password}}
 user {{username }} authorized-key {{ssh_key}}
+!
 ssh public-key-authentication
 no ntp enable
 ssh server vrf mgmt

@@ -13,13 +13,16 @@ mgmt:
 ovs:
 - sw1_ge4
 - sw2_ge4
-- sw5_ge2
+- sw5_ge4
+- sw6_ge4
 - sw1_ge5
 - sw2_ge5
-- sw5_ge3
+- sw5_ge5
+- sw6_ge5
 - sw1_ge6
 - sw2_ge6
-- sw5_ge4
+- sw5_ge6
+- sw6_ge6
 - sw3_ge5
 - sw4_ge5
 - sw3_ge6
@@ -46,6 +49,8 @@ fabric:
   - [sw1,ge-0/0/1,sw2,ge-0/0/1,0x11]
   - [sw3,1/1/1,sw4,1/1/1,0x11]
   - [sw3,1/1/2,sw4,1/1/2,0x11]
+  - [sw5,ge-0/0/0,sw6,ge-0/0/0,0x11]
+  - [sw5,ge-0/0/1,sw6,ge-0/0/1,0x11]
   - [sw1,ge-0/0/2,c1,ge-0/0/0,0x11]
   - [sw1,ge-0/0/3,c2,ge-0/0/0,0x11]
   - [sw2,ge-0/0/2,c1,ge-0/0/1,0x11]
@@ -54,10 +59,12 @@ fabric:
   - [sw3,1/1/4,c2,ge-0/0/2,0x11]
   - [sw4,1/1/3,c1,ge-0/0/3,0x11]
   - [sw4,1/1/4,c2,ge-0/0/3,0x11]
-  - [sw5,ge-0/0/0,c1,ge-0/0/4,0x11]
-  - [sw5,ge-0/0/1,c2,ge-0/0/4,0x11]
-  - [c1,ge-0/0/5,c2,ge-0/0/5,0x11]
+  - [sw5,ge-0/0/2,c1,ge-0/0/4,0x11]
+  - [sw5,ge-0/0/3,c2,ge-0/0/4,0x11]
+  - [sw6,ge-0/0/2,c1,ge-0/0/5,0x11]
+  - [sw6,ge-0/0/3,c2,ge-0/0/5,0x11]
   - [c1,ge-0/0/6,c2,ge-0/0/6,0x11]
+  - [c1,ge-0/0/7,c2,ge-0/0/7,0x11]
 vm:
   sw1:
     type: vjunosswitch
@@ -113,12 +120,24 @@ vm:
     port:
       lo0:
         inet: 10.1.255.5/32
-      ge-0/0/2: 
-        bridge: sw5_ge2
-      ge-0/0/3: 
-        bridge: sw5_ge3
       ge-0/0/4: 
         bridge: sw5_ge4
+      ge-0/0/5: 
+        bridge: sw5_ge5
+      ge-0/0/6: 
+        bridge: sw5_ge6
+  sw6:
+    type: vjunosswitch
+    ip_address: 192.168.250.6
+    port:
+      lo0:
+        inet: 10.1.255.6/32
+      ge-0/0/4: 
+        bridge: sw6_ge4
+      ge-0/0/5: 
+        bridge: sw6_ge5
+      ge-0/0/6: 
+        bridge: sw6_ge6
   c1:
     type: vjunosrouter
     ip_address: 192.168.250.15
@@ -131,85 +150,4 @@ vm:
     port:
       lo0:
         inet: 10.1.255.12/32
-lxc:
-  cl1sw1:
-    type: client
-    port:
-      eth0:
-        bridge: sw1_ge4
-        vlan: 111
-        inet: 192.168.111.11/24
-        gw4: 192.168.111.1
-        dns: 8.8.8.8
-        inet6: fc00:dead:beef:a111::1000:11/64
-        gw6: fc00:dead:Beef:a111::1
-  cl2sw1:
-    type: client
-    port:
-      eth0:
-        bridge: sw1_ge4
-        vlan: 121
-        inet: 192.168.121.11/24
-        gw4: 192.168.121.1
-        dns: 8.8.8.8
-        inet6: fc00:dead:beef:a121::1000:11/64
-        gw6: fc00:dead:Beef:a121::1
-  cl1sw5:
-    type: client
-    port:
-      eth0:
-        bridge: sw5_ge4
-        vlan: 151
-        inet: 192.168.151.11/24
-        gw4: 192.168.151.1
-        dns: 8.8.8.8
-        inet6: fc00:dead:beef:a151::1000:11/64
-        gw6: fc00:dead:Beef:a151::1
-  cl2sw5:
-    type: client
-    port:
-      eth0:
-        bridge: sw5_ge4
-        vlan: 152
-        inet: 192.168.152.11/24
-        gw4: 192.168.152.1
-        dns: 8.8.8.8
-        inet6: fc00:dead:beef:a152::1000:11/64
-        gw6: fc00:dead:Beef:a152::1
-  cl1sw3:
-    type: client
-    port:
-      eth0:
-        bridge: sw3_ge5
-        vlan: 131
-        inet: 192.168.131.11/24
-        gw4: 192.168.131.1
-        dns: 8.8.8.8
-        inet6: fc00:dead:beef:a131::1000:11/64
-        gw6: fc00:dead:Beef:a131::1
-  cl1sw4:
-    type: client
-    port:
-      eth0:
-        bridge: sw4_ge5
-        vlan: 141
-        inet: 192.168.141.11/24
-        gw4: 192.168.141.1
-        dns: 8.8.8.8
-        inet6: fc00:dead:beef:a141::1000:11/64
-        gw6: fc00:dead:Beef:a141::1
-  cl2sw4:
-    type: client
-    port:
-      eth0:
-        bridge: sw4_ge5
-        vlan: 142
-        inet: 192.168.142.11/24
-        gw4: 192.168.142.1
-        dns: 8.8.8.8
-        inet6: fc00:dead:beef:a142::1000:11/64
-        gw6: fc00:dead:Beef:a142::1
-
-
-
-
+  

@@ -37,4 +37,15 @@ if d1:
         lib1.list_bridge(d1)
     elif d1['cmd'] == 'sshconfig':
         lib1.add_to_ssh_config(d1)
+    elif d1['cmd'] == 'lxc-create':
+        lib1.create_lxc(d1)
+    elif d1['cmd'] == 'lxc-start':
+        lib1.start_lxc(d1)
+    elif d1['cmd'] == 'lxc-start':
+        lib1.stop_lxc(d1)
+    elif d1['cmd'] == 'lxc-delete':
+        lib1.stop_lxc(d1)
+        lib1.delete_lxc(d1)
+
+
 
