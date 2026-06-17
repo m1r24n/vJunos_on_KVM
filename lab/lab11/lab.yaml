@@ -110,5 +110,16 @@ lxc:
         dns: 8.8.8.8
         inet6: fc00:dead:beef:a122::1000:11/64
         gw6: fc00:dead:Beef:a122::1
+  cl3sw2:
+    type: client
+    port:
+      eth0:
+        bridge: sw2_ge1
+        vlan: 121
+        inet: 192.168.121.13/24
+        gw4: 192.168.121.1
+        dns: 8.8.8.8
+        inet6: fc00:dead:beef:a121::1000:13/64
+        gw6: fc00:dead:Beef:a121::1
   
 

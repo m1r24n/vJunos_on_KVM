@@ -10,7 +10,7 @@ from pathlib import Path
 import xmltodict
 import pprint
 import pathlib
-
+import shutil
 
 def check_config(d1):
 	if 'fabric' in d1.keys():
@@ -366,7 +366,23 @@ def create_netdev_config(d1):
 			filename = f"{d1['DEST_DIR']}/{i}.conf"
 			with open(filename,"w") as f:
 				f.write(config1)
+			if d1['vm'][i]['type'] == 'vsrx':
+				create_vsrx_config(d1,i)
         
+def create_vsrx_config(d1,i):
+	iso_dir = f"{d1['DEST_DIR']}/iso"
+	iso_file = f"{d1['DEST_DIR']}/iso"
+	iso_dest = f"{d1['vm_dir']}/{i}_config.iso"
+	src_file = f"{d1['DEST_DIR']}/{i}.conf"
+	dst_file = f"{d1['DEST_DIR']}/iso/juniper.conf"
+	dir_path = pathlib.Path(iso_dir)
+	dir_path.mkdir(parents=True, exist_ok=True)
+	shutil.copy(src_file, dst_file)
+	cmd1=f"mkisofs -l -o {iso_dest} {iso_dir}"
+	print("write vsrx config iso")
+	subprocess.check_output(cmd1,shell=True)
+
+
 def prefix2netmask(prefs):
 	i=0
 	b=[]
@@ -478,7 +494,7 @@ def create_config(d1):
 	get_mac_fxp0(d1)
 	#print(d1)
 	print("writing configuration for the network devices")
-	create_netdev_config(d1)
+	# create_netdev_config(d1)
 	print("Creating dhcpd config")
 
 	create_dhcp_config(d1)
@@ -745,7 +761,7 @@ def define_vm(d1):
 				data1['vcpu']=2
 				data1['ram']=4096
 				data1['cpu_model']=cpu_model
-				data1['cdrom'] = d1['disk']['vsrx_config']
+				data1['cdrom'] = f"{d1['vm_dir']}/{i}_config.iso"
 				data1['interfaces']={}
 				if 'type' in d1['mgmt'].keys():
 					if d1['mgmt']['type'] == 'ovs':

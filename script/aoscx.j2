@@ -6,6 +6,11 @@ ssh public-key-authentication
 no ntp enable
 ssh server vrf mgmt
 vlan 1
+!
+bfd
+bfd min-transmit-interval 500
+bfd detect-multiplier 3
+!
 interface mgmt
     no shutdown
     ip static {{ip_address}}
@@ -16,6 +21,7 @@ router ospf 1
     router-id {{ router_id }}
     {% endif -%}
     area 0.0.0.0
+	bfd all-interfaces
 {% endif -%}
 {% for intf in interfaces -%}
 {% if intf == 'lo0' -%}

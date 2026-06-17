@@ -11,8 +11,8 @@
     set protocols ospf area 0.0.0.0 interface irb.112
     set vlans vlan111 vlan-id 111
     set vlans vlan111 l3-interface irb.111
-    set vlans vlan111 vlan-id 112
-    set vlans vlan111 l3-interface irb.112
+    set vlans vlan112 vlan-id 112
+    set vlans vlan112 l3-interface irb.112
 
 
 

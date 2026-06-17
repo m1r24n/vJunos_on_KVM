@@ -51,6 +51,93 @@ forwarding-options {
 }
 {% endif -%}
 
+{% if type == 'vsrx' -%}
+system {
+	license {
+        autoupdate {
+            url https://ae1.juniper.net/junos/key_retrieval;
+        }
+    }
+}
+security {
+	pki {
+        ca-profile ISRG_Root_X1 {
+            ca-identity ISRG_Root_X1;
+            pre-load;
+        }
+        ca-profile Lets_Encrypt {
+            ca-identity Lets_Encrypt;
+            enrollment {
+                url https://acme-v02.api.letsencrypt.org/directory;
+            }
+        }
+    }
+    screen {
+        ids-option untrust-screen {
+            icmp {
+                ping-death;
+            }
+            ip {
+                source-route-option;
+                tear-drop;
+            }
+            tcp {
+                syn-flood {
+                    alarm-threshold 1024;
+                    attack-threshold 200;
+                    source-threshold 1024;
+                    destination-threshold 2048;
+                    queue-size 2000; ## Warning: 'queue-size' is deprecated
+                    timeout 20;
+                }
+                land;
+            }
+        }
+    }
+	zones {
+        security-zone trust {
+            tcp-rst;
+        }
+        security-zone untrust {
+            screen untrust-screen;
+        }
+    }
+	policies {
+        from-zone trust to-zone trust {
+            policy default-permit {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        from-zone trust to-zone untrust {
+            policy default-permit {
+                match {
+                    source-address any;
+                    destination-address any;
+                    application any;
+                }
+                then {
+                    permit;
+                }
+            }
+        }
+        pre-id-default-policy {
+            then {
+                log {
+                    session-close;
+                }
+            }
+        }
+    }
+}
+{% endif -%}
+
 
 interfaces {
     {% if type == 'vjunosevolved' -%}
@@ -201,6 +288,11 @@ protocols {
             {% if interfaces[intf].ospf  -%}
             interface {{ intf }} {
                 interface-type p2p;
+				bfd-liveness-detection {
+                	minimum-interval 500;
+                	multiplier 3;
+                	full-neighbors-only;
+            	}
             }
             {% endif -%}
             {% endif -%}

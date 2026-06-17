@@ -19,6 +19,7 @@ if d1:
     elif d1['cmd'] == 'delbr':
         lib1.del_bridge(d1)
     elif d1['cmd'] == 'create':
+        lib1.create_netdev_config(d1)
         lib1.create_vm(d1)
         lib1.create_config(d1)
         lib1.delete_known_hosts(d1)
