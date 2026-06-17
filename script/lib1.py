@@ -162,10 +162,10 @@ def add_address2intf(d1):
 		d1['vm'][vm1].update(prot1)
 		d1['vm'][vm2].update(prot1)
 
-		if vm1_type in ['vjunosswitch','vjunosrouter','vjunosevolved'] and vm2_type=='vaoscx':
+		if vm1_type in ['vjunosswitch','vjunosrouter','vjunosevolved','vsrx'] and vm2_type=='vaoscx':
 			d1['vm'][vm1]['port'][intf1].update({'mtu' : 9014 })
 			d1['vm'][vm2]['port'][intf2].update({'mtu' : 9000 })
-		elif vm1_type=='vaoscx' and vm2_type in ['vjunosswitch','vjunosrouter','vjunosevolved']:
+		elif vm1_type=='vaoscx' and vm2_type in ['vjunosswitch','vjunosrouter','vjunosevolved','vsrx']:
 			d1['vm'][vm1]['port'][intf1].update({'mtu' : 9000 })
 			d1['vm'][vm2]['port'][intf2].update({'mtu' : 9014 })
 		else:
@@ -294,7 +294,7 @@ def get_mac_fxp0(d1):
 	vm = d1['vm'].keys()
 	for i in vm:
 		# if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
-		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','vaoscx']:
+		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','vaoscx','vsrx']:
 			#print(f"vm {i}")
 			cmd=f"virsh dumpxml {i} | grep \"mac address\""
 			a = subprocess.check_output(cmd,shell=True)
@@ -336,7 +336,7 @@ def create_netdev_config(d1):
 	if 'ssh_key' in d1['junos_login'].keys():
 		p1['ssh_key']=d1['junos_login']['ssh_key']
 	for i in d1['vm'].keys():
-		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','vaoscx']:
+		if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','vaoscx','vsrx']:
 			print(f"vm {i}")
 			p1['hostname']=i
 			p1['type']= d1['vm'][i]['type']
@@ -437,7 +437,7 @@ def create_dhcp_config_v2(d1):
 	p1['vm'] = {}
 	for i in d1['vm'].keys():
 		# if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
-		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','vaoscx']:
+		if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','vaoscx','vsrx']:
 			if d1['vm'][i]['type'] == 'sonic':
 				p1['vm'].update({i : {'hostname': i,'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address'],'conf' : 0}})
 			else:
@@ -513,6 +513,7 @@ def check_argv(argv):
 							'kea4':f"{'/'.join(t1)}/kea-dhcp4.j2",
 							'vjunosswitch':f"{'/'.join(t1)}/vjunosswitch.j2",
 							'vjunosrouter':f"{'/'.join(t1)}/vjunosrouter.j2",
+							'vsrx':f"{'/'.join(t1)}/vsrx.j2",
 							'sonic':f"{'/'.join(t1)}/sonic.j2",
 							'vjunosevolved':f"{'/'.join(t1)}/vjunosevolved.j2",
 							'vaoscx':f"{'/'.join(t1)}/vaoscx.j2",
@@ -700,6 +701,51 @@ def define_vm(d1):
 				data1['vcpu']=4
 				data1['ram']=5120
 				data1['cpu_model']=cpu_model
+				data1['interfaces']={}
+				if 'type' in d1['mgmt'].keys():
+					if d1['mgmt']['type'] == 'ovs':
+						if 'vlan' in d1['mgmt'].keys():
+							vlantemp = d1['mgmt']['vlan']
+						else:
+							vlantemp = 0
+						data1['interfaces']['mgmt']={
+							'bridge' : d1['mgmt']['bridge'],
+							'index' : 1,
+							'vlan': vlantemp,
+							'ovs': '1' 
+						} 
+				else:
+					data1['interfaces']['mgmt']={
+						'bridge' : d1['mgmt']['bridge'],
+						'index' : 1,
+						'ovs':0
+					}
+				p=2
+				ports= list(d1['vm'][i]['port'].keys())
+				_ =ports.sort()
+				for j in ports:
+					if j != 'lo0':
+						t1=f"ge{j.split('/')[2]}"
+						if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
+							data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
+						else:
+							data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
+						p+=1
+				pprint.pprint(data1)
+				with open(d1['template'][vm_type]) as f1:
+					template1 = f1.read()
+					cmd=Template(template1).render(data1)
+			elif d1['vm'][i]['type'] == 'vsrx':
+				#cmd="virsh capabilities"
+				#cpu_model = xmltodict.parse(subprocess.check_output(cmd,shell=True).decode())['capabilities']['host']['cpu']['model'].split("-")[0]
+				cpu_model = "IvyBridge"
+				vm_type = d1['vm'][i]['type']
+				data1['name']=i
+				data1['disk']=disk
+				data1['vcpu']=2
+				data1['ram']=4096
+				data1['cpu_model']=cpu_model
+				data1['cdrom'] = d1['disk']['vsrx_config']
 				data1['interfaces']={}
 				if 'type' in d1['mgmt'].keys():
 					if d1['mgmt']['type'] == 'ovs':
