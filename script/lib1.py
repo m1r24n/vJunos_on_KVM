@@ -321,11 +321,19 @@ def add_ssh_key(d1):
 	# 	exit()
 	# adding configuration for loopback
 
+def create_vm_dir(d1):
+	vm_dir = d1['vm_dir']
+	if os.path.exists(vm_dir):
+		shutil.rmtree("vm_dir")
+	dir_path = pathlib.Path(vm_dir)
+	dir_path.mkdir(parents=True, exist_ok=True)
+
 def create_netdev_config(d1):
 	with open(d1['template']['junos']) as f:
 		junos_template = f.read()
 	with open(d1['template']['aoscx']) as f:
 		aoscx_template = f.read()
+	create_vm_dir(d1)
 	p1 = {}
 	p1['junos_user']=d1['junos_login']['user']
 	p1['username']='admin'
