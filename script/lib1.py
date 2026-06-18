@@ -324,7 +324,7 @@ def add_ssh_key(d1):
 def create_vm_dir(d1):
 	vm_dir = d1['vm_dir']
 	if os.path.exists(vm_dir):
-		shutil.rmtree("vm_dir")
+		shutil.rmtree(vm_dir)
 	dir_path = pathlib.Path(vm_dir)
 	dir_path.mkdir(parents=True, exist_ok=True)
 
