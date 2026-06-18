@@ -19,7 +19,6 @@
 	set chassis high-availability peer-id 2 liveness-detection minimum-interval 1000
 	set chassis high-availability peer-id 2 liveness-detection multiplier 3
 	set chassis high-availability services-redundancy-group 0 peer-id 2
-	
 	set security zones security-zone trust host-inbound-traffic system-services ping
 	set security zones security-zone trust host-inbound-traffic system-services high-availability
 	set security zones security-zone trust host-inbound-traffic system-services ssh
@@ -28,11 +27,11 @@
 	set security zones security-zone trust interfaces ge-0/0/0.0
 	set security zones security-zone trust interfaces ge-0/0/2.0
 	set security zones security-zone trust interfaces lo0.0
-	
 	set security zones security-zone untrust host-inbound-traffic system-services ping
 	set security zones security-zone untrust host-inbound-traffic protocols ospf
 	set security zones security-zone untrust host-inbound-traffic protocols bfd
 	set security zones security-zone untrust interfaces ge-0/0/1.0
+	set system static-host-mapping fw2 inet 10.1.255.12
 	
 	set groups mnha-sync when peers fw1
 	set groups mnha-sync when peers fw2
@@ -64,8 +63,6 @@
 	set system commit peers-synchronize
 	set system commit peers fw2 user admin
 	set system commit peers fw2 authentication "$9$OQCdBhreK87dsM8aZUDkq"
-	set system static-host-mapping fw2 inet 10.1.255.12
-	
 	deactivate security policies
 	set security ssh-known-hosts fetch-from-server fw2
 
@@ -79,7 +76,6 @@
 	set chassis high-availability peer-id 1 liveness-detection minimum-interval 1000
 	set chassis high-availability peer-id 1 liveness-detection multiplier 3
 	set chassis high-availability services-redundancy-group 0 peer-id 1
-	
 	set security zones security-zone trust host-inbound-traffic system-services ping
 	set security zones security-zone trust host-inbound-traffic system-services high-availability
 	set security zones security-zone trust host-inbound-traffic system-services ssh
@@ -88,11 +84,11 @@
 	set security zones security-zone trust interfaces ge-0/0/0.0
 	set security zones security-zone trust interfaces ge-0/0/2.0
 	set security zones security-zone trust interfaces lo0.0
-	
 	set security zones security-zone untrust host-inbound-traffic system-services ping
 	set security zones security-zone untrust host-inbound-traffic protocols ospf
 	set security zones security-zone untrust host-inbound-traffic protocols bfd
 	set security zones security-zone untrust interfaces ge-0/0/1.0
+	set system static-host-mapping fw1 inet 10.1.255.11
 
 	set groups mnha-sync when peers fw1
 	set groups mnha-sync when peers fw2
@@ -100,8 +96,6 @@
 	set system commit peers-synchronize
 	set system commit peers fw1 user admin
 	set system commit peers fw1 authentication "$9$OQCdBhreK87dsM8aZUDkq"
-	set system static-host-mapping fw1 inet 10.1.255.11
-	
 	deactivate security policies
 	set security ssh-known-hosts fetch-from-server fw1
 
@@ -133,8 +127,8 @@
 	set interfaces irb unit 122 family inet address 192.168.122.1/24
 	set protocols ospf area 0.0.0.0 interface irb.121
 	set protocols ospf area 0.0.0.0 interface irb.122
-	set vlans vlan111 vlan-id 121
-	set vlans vlan111 l3-interface irb.121
-	set vlans vlan112 vlan-id 122
-	set vlans vlan112 l3-interface irb.122
+	set vlans vlan121 vlan-id 121
+	set vlans vlan121 l3-interface irb.121
+	set vlans vlan122 vlan-id 122
+	set vlans vlan122 l3-interface irb.122
 
