@@ -12,71 +12,70 @@
 		set vlans vlan112 l3-interface irb.112
 
 # config fw1
-set chassis high-availability local-id 1
-set chassis high-availability local-id local-ip 10.1.255.11
-set chassis high-availability peer-id 2 peer-ip 10.1.255.12
-set chassis high-availability peer-id 2 interface lo0.0
-set chassis high-availability peer-id 2 liveness-detection minimum-interval 1000
-set chassis high-availability peer-id 2 liveness-detection multiplier 3
-set chassis high-availability services-redundancy-group 0 peer-id 2
-
-set security zones security-zone trust host-inbound-traffic system-services ping
-set security zones security-zone trust host-inbound-traffic system-services high-availability
-set security zones security-zone trust host-inbound-traffic system-services ssh
-set security zones security-zone trust host-inbound-traffic protocols ospf
-set security zones security-zone trust host-inbound-traffic protocols bfd
-set security zones security-zone trust interfaces ge-0/0/0.0
-set security zones security-zone trust interfaces ge-0/0/2.0
-set security zones security-zone trust interfaces lo0.0
-
-set security zones security-zone untrust host-inbound-traffic system-services ping
-set security zones security-zone untrust host-inbound-traffic protocols ospf
-set security zones security-zone untrust host-inbound-traffic protocols bfd
-set security zones security-zone untrust interfaces ge-0/0/1.0
-
-set groups mnha-sync when peers fw1
-set groups mnha-sync when peers fw2
-set groups mnha-sync security policies from-zone trust to-zone trust policy default-permit match source-address any
-set groups mnha-sync security policies from-zone trust to-zone trust policy default-permit match destination-address any
-set groups mnha-sync security policies from-zone trust to-zone trust policy default-permit match application any
-set groups mnha-sync security policies from-zone trust to-zone trust policy default-permit then permit
-set groups mnha-sync security policies from-zone trust to-zone untrust policy default-permit match source-address any
-set groups mnha-sync security policies from-zone trust to-zone untrust policy default-permit match destination-address any
-set groups mnha-sync security policies from-zone trust to-zone untrust policy default-permit match application any
-set groups mnha-sync security policies from-zone trust to-zone untrust policy default-permit then permit
-set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 match source-address cl3sw2
-set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 match destination-address cl2sw1
-set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 match application junos-ping
-set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 match application junos-ssh
-set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 then permit
-set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 then log session-init
-set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 then count
-set groups mnha-sync security policies from-zone untrust to-zone trust policy default match source-address any
-set groups mnha-sync security policies from-zone untrust to-zone trust policy default match destination-address any
-set groups mnha-sync security policies from-zone untrust to-zone trust policy default match application any
-set groups mnha-sync security policies from-zone untrust to-zone trust policy default then reject
-set groups mnha-sync security policies from-zone untrust to-zone trust policy default then log session-init
-set groups mnha-sync security policies from-zone untrust to-zone trust policy default then count
-set groups mnha-sync security policies pre-id-default-policy then log session-close
-set groups mnha-sync security address-book global address cl3sw2 192.168.121.13/32
-set groups mnha-sync security address-book global address cl2sw1 192.168.112.11/32
-set apply-groups mnha-sync
-set system commit peers-synchronize
-set system commit peers fw2 user admin
-set system commit peers fw2 authentication "$9$OQCdBhreK87dsM8aZUDkq"
-set system static-host-mapping fw2 inet 10.1.255.12
-
-set chassis high-availability local-id 1
-set chassis high-availability local-id local-ip 10.1.255.11
-set chassis high-availability peer-id 2 peer-ip 10.1.255.12
-set chassis high-availability peer-id 2 interface lo0.0
-set chassis high-availability peer-id 2 liveness-detection minimum-interval 1000
-set chassis high-availability peer-id 2 liveness-detection multiplier 3
-set chassis high-availability services-redundancy-group 0 peer-id 2
-
-deactivate security policies
-set security ssh-known-hosts fetch-from-server
-# set security ssh-known-hosts host fw2 ed25519-key AAAAC3NzaC1lZDI1NTE5AAAAIJPNz55pvppMHBx9erL5PGoFAkasc9eAb+D/q774Po4U
+	set chassis high-availability local-id 1
+	set chassis high-availability local-id local-ip 10.1.255.11
+	set chassis high-availability peer-id 2 peer-ip 10.1.255.12
+	set chassis high-availability peer-id 2 interface lo0.0
+	set chassis high-availability peer-id 2 liveness-detection minimum-interval 1000
+	set chassis high-availability peer-id 2 liveness-detection multiplier 3
+	set chassis high-availability services-redundancy-group 0 peer-id 2
+	
+	set security zones security-zone trust host-inbound-traffic system-services ping
+	set security zones security-zone trust host-inbound-traffic system-services high-availability
+	set security zones security-zone trust host-inbound-traffic system-services ssh
+	set security zones security-zone trust host-inbound-traffic protocols ospf
+	set security zones security-zone trust host-inbound-traffic protocols bfd
+	set security zones security-zone trust interfaces ge-0/0/0.0
+	set security zones security-zone trust interfaces ge-0/0/2.0
+	set security zones security-zone trust interfaces lo0.0
+	
+	set security zones security-zone untrust host-inbound-traffic system-services ping
+	set security zones security-zone untrust host-inbound-traffic protocols ospf
+	set security zones security-zone untrust host-inbound-traffic protocols bfd
+	set security zones security-zone untrust interfaces ge-0/0/1.0
+	
+	set groups mnha-sync when peers fw1
+	set groups mnha-sync when peers fw2
+	set groups mnha-sync security policies from-zone trust to-zone trust policy default-permit match source-address any
+	set groups mnha-sync security policies from-zone trust to-zone trust policy default-permit match destination-address any
+	set groups mnha-sync security policies from-zone trust to-zone trust policy default-permit match application any
+	set groups mnha-sync security policies from-zone trust to-zone trust policy default-permit then permit
+	set groups mnha-sync security policies from-zone trust to-zone untrust policy default-permit match source-address any
+	set groups mnha-sync security policies from-zone trust to-zone untrust policy default-permit match destination-address any
+	set groups mnha-sync security policies from-zone trust to-zone untrust policy default-permit match application any
+	set groups mnha-sync security policies from-zone trust to-zone untrust policy default-permit then permit
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 match source-address cl3sw2
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 match destination-address cl2sw1
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 match application junos-ping
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 match application junos-ssh
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 then permit
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 then log session-init
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 then count
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy default match source-address any
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy default match destination-address any
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy default match application any
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy default then reject
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy default then log session-init
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy default then count
+	set groups mnha-sync security policies pre-id-default-policy then log session-close
+	set groups mnha-sync security address-book global address cl3sw2 192.168.121.13/32
+	set groups mnha-sync security address-book global address cl2sw1 192.168.112.11/32
+	set apply-groups mnha-sync
+	set system commit peers-synchronize
+	set system commit peers fw2 user admin
+	set system commit peers fw2 authentication "$9$OQCdBhreK87dsM8aZUDkq"
+	set system static-host-mapping fw2 inet 10.1.255.12
+	
+	set chassis high-availability local-id 1
+	set chassis high-availability local-id local-ip 10.1.255.11
+	set chassis high-availability peer-id 2 peer-ip 10.1.255.12
+	set chassis high-availability peer-id 2 interface lo0.0
+	set chassis high-availability peer-id 2 liveness-detection minimum-interval 1000
+	set chassis high-availability peer-id 2 liveness-detection multiplier 3
+	set chassis high-availability services-redundancy-group 0 peer-id 2
+	
+	deactivate security policies
+	set security ssh-known-hosts fetch-from-server
 
 
 # config fw2
