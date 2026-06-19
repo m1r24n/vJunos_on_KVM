@@ -25,12 +25,13 @@
 	set security zones security-zone trust host-inbound-traffic protocols ospf
 	set security zones security-zone trust host-inbound-traffic protocols bfd
 	set security zones security-zone trust interfaces ge-0/0/0.0
-	set security zones security-zone trust interfaces ge-0/0/2.0
+	set security zones security-zone trust interfaces ge-0/0/3.0
 	set security zones security-zone trust interfaces lo0.0
 	set security zones security-zone untrust host-inbound-traffic system-services ping
 	set security zones security-zone untrust host-inbound-traffic protocols ospf
 	set security zones security-zone untrust host-inbound-traffic protocols bfd
 	set security zones security-zone untrust interfaces ge-0/0/1.0
+	set security zones security-zone untrust interfaces ge-0/0/2.0
 	set system static-host-mapping fw2 inet 10.1.255.12
 	
 	set groups mnha-sync when peers fw1
@@ -50,6 +51,13 @@
 	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 then permit
 	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 then log session-init
 	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit1 then count
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit2 match source-address cl3sw3
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit2 match destination-address cl2sw1
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit2 match application junos-ping
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit2 match application junos-ssh
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit2 then permit
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit2 then log session-init
+	set groups mnha-sync security policies from-zone untrust to-zone trust policy permit2 then count
 	set groups mnha-sync security policies from-zone untrust to-zone trust policy default match source-address any
 	set groups mnha-sync security policies from-zone untrust to-zone trust policy default match destination-address any
 	set groups mnha-sync security policies from-zone untrust to-zone trust policy default match application any
@@ -59,6 +67,7 @@
 	set groups mnha-sync security policies pre-id-default-policy then log session-close
 	set groups mnha-sync security address-book global address cl3sw2 192.168.121.13/32
 	set groups mnha-sync security address-book global address cl2sw1 192.168.112.11/32
+	set groups mnha-sync security address-book global address cl3sw3 192.168.131.13/32
 	set apply-groups mnha-sync
 	set system commit peers-synchronize
 	set system commit peers fw2 user admin
@@ -82,17 +91,19 @@
 	set security zones security-zone trust host-inbound-traffic protocols ospf
 	set security zones security-zone trust host-inbound-traffic protocols bfd
 	set security zones security-zone trust interfaces ge-0/0/0.0
-	set security zones security-zone trust interfaces ge-0/0/2.0
+	set security zones security-zone trust interfaces ge-0/0/3.0
 	set security zones security-zone trust interfaces lo0.0
 	set security zones security-zone untrust host-inbound-traffic system-services ping
 	set security zones security-zone untrust host-inbound-traffic protocols ospf
 	set security zones security-zone untrust host-inbound-traffic protocols bfd
 	set security zones security-zone untrust interfaces ge-0/0/1.0
+	set security zones security-zone untrust interfaces ge-0/0/2.0
 	set system static-host-mapping fw1 inet 10.1.255.11
 
-	set groups mnha-sync when peers fw1
+	<!-- set groups mnha-sync when peers fw1
 	set groups mnha-sync when peers fw2
-	set apply-groups mnha-sync
+	set apply-groups mnha-sync -->
+	
 	set system commit peers-synchronize
 	set system commit peers fw1 user admin
 	set system commit peers fw1 authentication "$9$OQCdBhreK87dsM8aZUDkq"
@@ -102,6 +113,7 @@
 # config sw2 using aos-cx
 
 	ssh server vrf mgmt
+	https-server vrf mgmt
 	vlan 1,121-122
 	!
 	interface 1/1/1
@@ -118,17 +130,17 @@
 	    ip address 192.168.122.1/24
 	    ip ospf 1 area 0.0.0.0
 
-# sw2 using junos
+# sw3 using junos
 
 	set interfaces ge-0/0/0 unit 0 family ethernet-switching interface-mode trunk
-	set interfaces ge-0/0/0 unit 0 family ethernet-switching vlan members vlan121
-	set interfaces ge-0/0/0 unit 0 family ethernet-switching vlan members vlan122
-	set interfaces irb unit 121 family inet address 192.168.121.1/24
-	set interfaces irb unit 122 family inet address 192.168.122.1/24
-	set protocols ospf area 0.0.0.0 interface irb.121
-	set protocols ospf area 0.0.0.0 interface irb.122
-	set vlans vlan121 vlan-id 121
-	set vlans vlan121 l3-interface irb.121
-	set vlans vlan122 vlan-id 122
-	set vlans vlan122 l3-interface irb.122
+	set interfaces ge-0/0/0 unit 0 family ethernet-switching vlan members vlan131
+	set interfaces ge-0/0/0 unit 0 family ethernet-switching vlan members vlan132
+	set interfaces irb unit 131 family inet address 192.168.131.1/24
+	set interfaces irb unit 132 family inet address 192.168.132.1/24
+	set protocols ospf area 0.0.0.0 interface irb.131
+	set protocols ospf area 0.0.0.0 interface irb.132
+	set vlans vlan131 vlan-id 131
+	set vlans vlan131 l3-interface irb.131
+	set vlans vlan132 vlan-id 132
+	set vlans vlan132 l3-interface irb.132
 
