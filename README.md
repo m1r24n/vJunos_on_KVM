@@ -1,6 +1,6 @@
 # how to automatically deploy vJunos on KVM
 
-version 0.5
+version 0.6, updated 20 june 2026
 
 ## DISCLAIMER
 
@@ -8,9 +8,11 @@ version 0.5
        Please keep your local copy updated.
 
 ## Introduction
-This repository contains my notes and python scripts to deploy multiple vJunos VMs on KVM on linux platform.
+This repository contains my notes and python scripts to deploy multiple vJunos and AOS-CX Simulator VMs on KVM on linux platform.
 
 Official information on vJunos can be found [here](https://www.juniper.net/us/en/dm/vjunos-labs.html)
+
+Official information on Aruba AOS-CX simulator can be found [here](https://airheads.hpe.com/discussion/start-here-welcome-to-the-aruba-aos-cx-switch-simulator)
 
 Official documentations on how to install vJunos on KVM :
 - [vJunosRouter](https://www.juniper.net/documentation/us/en/software/vjunos-router/vjunos-router-kvm/index.html)
@@ -20,14 +22,14 @@ Official documentations on how to install vJunos on KVM :
 The official documentation provide information on how to deploy individual vJunos VM on KVM using xml configuration file for libvirt and setup the bridge connection between vJunos VM manually.
 
 The python script that I created, will perform the following tasks:
-1. automatic deployment of bridges for connection between vJunos VMs
-2. automatic deployment of multiple vJunos VM (vJunosRouter, vJunosSwitch or vJunosEvolved (virtual PTX10001-36MR)) 
-3. initial configuration for vJunos VM which can be deployed using ZTP into the vJunos VM.
+1. automatic deployment of bridges for connection between NetDev (network device) VMs
+2. automatic deployment of multiple vJunos VM (vJunosRouter, vJunosSwitch or vJunosEvolved (virtual PTX10001-36MR)), vAOS-CX
+3. initial configuration for vJunos and AOS-CX VM which can be deployed using ZTP into the vJunos VM.
 4. configuration file for kea-dhcp4-server required for ZTP process for vJunos initialization.
 
 the initial configuration for vJunos VM will consist the following: 
 1. Basic configuration, such as username/password for accessing the vJunos VM, ip address of management interface, enbling SSH server.
-2. advance configuration, such as ipv4/ipv6 address for vJunos VM interfaces, routing protocol (for now only IS-IS), MPLS configuration (LDP/RSVP). SR-MPLS configuration, and SRv6 configuration.
+2. advance configuration, such as ipv4/ipv6 address for vJunos VM interfaces, routing protocol (for now only IS-IS, OSPF), MPLS configuration (LDP/RSVP).
 
 ## notes
 This script is tested on ubuntu 24.04 + KVM + libvirt + python3 on supermicro E200-8d with 128G RAM and Intel NUC i7/64G RAM
@@ -47,7 +49,7 @@ Screenshot recording of these steps can be found [here](https://asciinema.org/a/
        
        sudo apt install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils openvswitch-switch openvswitch-common kea-dhcp4-server tftpd-hpa
 
-3. Create linux bridge to provide connection to the management interface of vJunos VM. for example the following netplan configuration file will create bridge **br0** with ip address **192.168.254.254/24**
+3. Create linux bridge to provide connection to the management interface of the VMs. for example the following netplan configuration file will create bridge **br0** with ip address **192.168.254.254/24**
 
        irzan@home2:/etc/netplan$ sudo cat /etc/netplan/02_net.yaml 
        network:
@@ -125,8 +127,11 @@ Screenshot recording of these steps can be found [here](https://asciinema.org/a/
 4. Initialize lxd. Since dhcp server (kea-dhcp4-server) has been installed, then disable dnsmasq on LXD (by disabling bridge managed by LXD and use the bridge that was created on the previous step.)
 
        sudo lxd init
+       lxc network set lxdbr0 ipv4.nat false
+       lxc network set lxdbr0 ipv4.address none
 
-   ![lxd_bridge.png](images/lxd_bridge.png)
+
+   <!-- ![lxd_bridge.png](images/lxd_bridge.png) -->
 
 ## Prepare python3 environment to run the script
 
@@ -168,12 +173,14 @@ Screenshot recording of these steps can be found [here](https://asciinema.org/a/
     - lib1.py  --> this python file contains all the function required to deploy vJunos VM on the host
     - kea-dhcp4-server.j2  --> jinja2 template to generate configuration file for kea-dhcp4-server
     - junos.j2 --> jinja2 template to generate initial configuration for vJunos VM
-    - vjunosswitch.j2  --> jinja2 template to create script which will be used to deploy vJunosSwitch VM on the host
-    - vjunosrouter.j2  --> jinja2 template to create script which will be used to deploy vJunosRouter VM on the host
-    - vjunosevolved.j2 --> jinja2 template to create script which will be used to deploy vJunosEvolved VM on the host
+    - aoscx.j2 --> jinja2 template to generate initial configuration for AOS-CX VM
+    - vjunosswitch.j2  --> jinja2 template to create a script which will be used to deploy vJunosSwitch VM on the host
+    - vjunosrouter.j2  --> jinja2 template to create a script which will be used to deploy vJunosRouter VM on the host
+    - vjunosevolved.j2 --> jinja2 template to create a script which will be used to deploy vJunosEvolved VM on the host
+    - vsrx.j2 --> jinja2 template to create a script which will be used to deploy vAOS-CX VM on the host
 
-3. To deploy the vJunos, run script [vlab.py](script/vlab.py).
-4. The script [vlab.py](script/vlab.py) requires input from file **lab.yaml**, which define the topology of the lab, such as number of vJunos VMs, connection between vJunosVM, and initial configuration of vJunos VM.
+3. To deploy the NetDev, run script [vlab.py](script/vlab.py).
+4. The script [vlab.py](script/vlab.py) requires input from file **lab.yaml**, which define the topology of the lab, such as number of vJunos/AOS-CX VMs, connection between VM, and initial configuration of vJunos VM/AOS-CX.
 6. sample of file **lab.yaml**, can be found under directory [./lab](./lab). There are several **lab.yaml** files for different topology that can be build.
 7. Examples for [lab.yaml](lab/lab1/lab.yaml) or [lab.yaml](lab/lab2/lab.yaml)
 
@@ -188,6 +195,8 @@ Screenshot recording of these steps can be found [here](https://asciinema.org/a/
          vjunosswitch: /disk3/vjunos/vJunos-switch-25.2R1.9.qcow2
          vjunosevolved: /disk3/vjunos/vJunosEvolved-25.2R1.8-EVO.qcow2
          vjunosevolved_config: /disk3/vjunos/vjunosevolved_config.img
+         vaoscx: /vm/images/aoscx_10.18.qcow2
+         vsrx: /vm/images/junos-vsrx3-x86-64-25.4R1.12.qcow2
 
 2. Section **vm_dir** specify the directory where the disk images for each vJunos VM will be stored
 
@@ -261,7 +270,7 @@ Screenshot recording of these steps can be found [here](https://asciinema.org/a/
 
        for example, if it is 0x0, it means nothing will be configured on the interface
        if it is 0x1cd, the binary equivalent is 0b111001101, which means ipv6 will not be configured, but other like ipv4, iso, isis, mpls, ldp, rsvp will be configured on the junos configuration created by the script.
-       as for now, the script will only generate configuration for IS-IS as the routing protocol, others such as ospf/ospf3 are not supported yet.
+       as for now, the script will only generate configuration for IS-IS or OSPF as the routing protocol, others such as ospf3 are not supported yet.
 
 7. Section **vm**, specify the vJunos VM which will be created by the script.
 
@@ -373,16 +382,20 @@ Screenshot recording of these steps can be found [here](https://asciinema.org/a/
 
 
 
-# create client
+# create LXC container used as master image
+
+In this lab, LXC (linux container is used to simulate external devices, such as client, server, or another router)
+
+Use the following steps to create the master image for the LXC container:
 
 1. Download lxc image, for example alpine
 
        lxc image copy images:alpine/edge local: --alias alpine
        lxc image ls
 
-2. Create container **client** using alpine image (alpine image is very light, less than 4Mbytes)
+2. Create container **alpine** using alpine image (alpine image is very light, less than 4Mbytes)
 
-       lxc launch alpine client
+       lxc launch alpine alpine
        lxc ls
 
 3. Access container client and add the necessary software, such as openssh server, iperf, etc
@@ -398,48 +411,61 @@ Screenshot recording of these steps can be found [here](https://asciinema.org/a/
        passwd root
        service sshd start
        exit
-       lxc stop client
+       lxc stop alpine
+
+4. Verify that the master container has been created
+
+       lxc ls
+
+# Deploy multiple client for the lab
+1. Define the containers in the **lab.yaml** file under **lxc:**
+
+    lxc:
+        cl1sw1:
+            type: alpine
+            port:
+                eth0:
+                    bridge: sw1_ge0
+                    vlan: 111
+                    inet: 192.168.111.11/24
+                    gw4: 192.168.111.1
+                    dns: 8.8.8.8
+                    inet6: fc00:dead:beef:a111::1000:11/64
+                    gw6: fc00:dead:Beef:a111::1
+        cl2sw1:
+            type: alpine
+            port:
+                eth0:
+                    bridge: sw1_ge0
+                    vlan: 112
+                    inet: 192.168.112.11/24
+                    gw4: 192.168.112.1
+                    dns: 8.8.8.8
+                    inet6: fc00:dead:beef:a112::1000:11/64
+                    gw6: fc00:dead:Beef:a112::1
+
+2. To deploy and start the container, do the following 
+
+    ../../script/vlab.py lxc-create
+    ../../script/vlab.py lxc-start
+
+3. To acces the container, 
+    lxc exec <container_name> sh
+
+4. To stop and delete all the container
+
+    ../../script/vlab.py lxc-delete
 
 
-4. copy the container **client** into container which will be connected to the vJunosVM. for example, we want create container client1 connected to bridge pe1_ge0 which is connected to port ge-0/0/0 of vJunos VM PE1
+# To save network devices configuration
 
-       lxc copy client client1
+To save the network devices configuration, you can use the following command
 
-5. Modify container **client1** so its interface eth0 is connected to bridge **pe1_ge0** on vlan 101
+    ../../script/vlab.py get_netdev_config
 
-       lxc query --request PATCH /1.0/instances/client1 --data "{
-         \"devices\": {
-           \"eth0\" :{
-             \"name\": \"eth0\",
-             \"nictype\": \"bridged\",
-             \"parent\": \"pe1_ge0\",
-             \"vlan\" : \"101\",
-             \"type\": \"nic\"
-           }
-         }
-       }"
+the configuration files will be save under directory <config_dir>
 
-6. By default LXC container will use DHCP, to configure static ip address on the container, use the following script
-
-       cat << EOF | tee interfaces
-       auto eth0
-       iface eth0 inet static
-       address 172.16.10.11/24
-       gateway 172.16.10.1
-       mtu 1500
-       iface eth0 inet6 static
-       address fc00:dead:beef:aa20::1000:11/64
-       EOF
-       echo "push configuration into node client1"
-       lxc file push interfaces  client1/etc/network/interfaces
-
-7. Start the container and access it to generate traffic or test connectivity 
-
-       lxc start client1
-       lxc exec client1 sh
-
-
-## Restart the lab after host reboot.
+# Restart the lab after host reboot.
 
 If the linux host is rebooted, VMs configuration are still available, but bridges configuration are not saved, unless it is openvswitch bridge.
 

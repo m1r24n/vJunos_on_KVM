@@ -11,7 +11,7 @@ disk:
   #vjunosevolvedbx: /disk3/vjunos/
   #vjunosevolved_config: /disk3/vjunos/vjunosevolved_config.img
 vm_dir: /vm/lab11
-config_dir: config_dir
+config_dir: devices_config
 mgmt:
   bridge: br0
 ovs:
