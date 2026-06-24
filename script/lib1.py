@@ -14,6 +14,7 @@ import shutil
 import requests, urllib3
 from jnpr.junos import Device
 from lxml import etree
+import paramiko
 
 urllib3.disable_warnings()
 
@@ -83,12 +84,12 @@ def add_address2intf(d1):
             num_link_with_ipv6 +=1
     #print("v4 and v6 link ",num_link_with_ipv4,num_link_with_ipv6)
     if num_link_with_ipv4 > 0:
-        if 'ipv4_prefix' not in d1['fabric'].keys():
+        if 'inet_prefix' not in d1['fabric'].keys():
             print("ipv4 prefix is not defined on the configuration")
             exit()
         else:
             # print("ipv4 prefix is defined")
-            pref_len = 32 - int(d1['fabric']['ipv4_prefix'].split('/')[1])
+            pref_len = 32 - int(d1['fabric']['inet_prefix'].split('/')[1])
             #pref_len6 = 128 - int(d1['fabric']['subnet6'].split('/')[1])
             num_subnet = int( (2 **  pref_len) / 2)
             #num_subnet6 = int( (2 **  pref_len6) / 2)
@@ -104,7 +105,7 @@ def add_address2intf(d1):
             # #	print("number of VM on topology doesn't match with on configuration")
             else:
                 #print(f"enough ip on the subnet link {num_link_with_ipv4}, num of subnet {num_subnet}")
-                start_ip = ipv4_to_int(d1['fabric']['ipv4_prefix'])
+                start_ip = ipv4_to_int(d1['fabric']['inet_prefix'])
                 #print("start_ip ",start_ip,f"{bin2ip(start_ip)}/31")
                 
                 for i in d1['fabric']['topology']:
@@ -120,7 +121,7 @@ def add_address2intf(d1):
                         d1['vm'][vm2]['port'][intf2].update({'inet' : ip_vm2 })
                         start_ip +=1
     if num_link_with_ipv6 > 0:
-        if 'ipv6_prefix' not in d1['fabric'].keys():
+        if 'inet6_prefix' not in d1['fabric'].keys():
             for i in d1['fabric']['topology']:
                 if i[4] & 0x2:
                     vm1 = i[0]
@@ -131,7 +132,7 @@ def add_address2intf(d1):
                     d1['vm'][vm2]['port'][intf2].update({'inet6' : 1 })
         else:
             start_ipv6 = 0
-            ipv6_address=d1['fabric']['ipv6_prefix'].split('/')[0]
+            ipv6_address=d1['fabric']['inet6_prefix'].split('/')[0]
             for i in d1['fabric']['topology']:
                 if i[4] & 0x2:
                     vm1 = i[0]
@@ -253,7 +254,7 @@ def set_bridge(d1):
     intf_list=[]
     bridge_list=[]
     for i in t1:
-        if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','vaoscx']:
+        if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','vaoscx','linuxrouter']:
             vm.append(i)
     for i in vm:
         cmd = f"virsh domiflist {i} | tail -n +4"
@@ -299,7 +300,7 @@ def get_mac_fxp0(d1):
     vm = d1['vm'].keys()
     for i in vm:
         # if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
-        if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','vaoscx','vsrx']:
+        if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','vaoscx','vsrx','linuxrouter']:
             #print(f"vm {i}")
             cmd=f"virsh dumpxml {i} | grep \"mac address\""
             a = subprocess.check_output(cmd,shell=True)
@@ -338,7 +339,9 @@ def create_netdev_config(d1):
         junos_template = f.read()
     with open(d1['template']['aoscx']) as f:
         aoscx_template = f.read()
-    create_vm_dir(d1)
+    with open(d1['template']['linuxroutercfg']) as f:
+        linuxroutercfg_template = f.read()
+    # create_vm_dir(d1)
     p1 = {}
     p1['junos_user']=d1['junos_login']['user']
     p1['username']='admin'
@@ -349,7 +352,7 @@ def create_netdev_config(d1):
     if 'ssh_key' in d1['junos_login'].keys():
         p1['ssh_key']=d1['junos_login']['ssh_key']
     for i in d1['vm'].keys():
-        if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','vaoscx','vsrx']:
+        if d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','vaoscx','vsrx','linuxrouter']:
             print(f"vm {i}")
             p1['hostname']=i
             p1['type']= d1['vm'][i]['type']
@@ -368,8 +371,11 @@ def create_netdev_config(d1):
             #pprint.pprint(p1)
             if d1['vm'][i]['type'] == 'vaoscx':
                 config1=Template(aoscx_template).render(p1)
-            else:
+            elif d1['vm'][i]['type'] in ['vjunosswitch','vjunosevolved','vjunosrouter','vsrx']:
                 config1=Template(junos_template).render(p1)
+            else:
+                config1=Template(linuxroutercfg_template).render(p1)
+                # print(config1)
             if not os.path.exists(d1['DEST_DIR']):
                 os.makedirs(d1['DEST_DIR'])
             # else:
@@ -381,19 +387,24 @@ def create_netdev_config(d1):
                 f.write(config1)
             if d1['vm'][i]['type'] == 'vsrx':
                 create_vsrx_config(d1,i)
+            #
         
 def create_vsrx_config(d1,i):
     iso_dir = f"{d1['DEST_DIR']}/iso"
-    iso_file = f"{d1['DEST_DIR']}/iso"
+    # iso_file = f"{d1['DEST_DIR']}/iso"
     iso_dest = f"{d1['vm_dir']}/{i}_config.iso"
     src_file = f"{d1['DEST_DIR']}/{i}.conf"
     dst_file = f"{d1['DEST_DIR']}/iso/juniper.conf"
-    dir_path = pathlib.Path(iso_dir)
-    dir_path.mkdir(parents=True, exist_ok=True)
+    # dir_path = pathlib.Path(iso_dir)
+    # dir_path.mkdir(parents=True, exist_ok=True)
+    if not os.path.isdir(d1['DEST_DIR']):
+      # os.remove(d1['DEST_DIR'])
+      os.makedirs(iso_dir)
     shutil.copy(src_file, dst_file)
-    cmd1=f"mkisofs -l -o {iso_dest} {iso_dir}"
     print("write vsrx config iso")
+    cmd1=f"mkisofs -l -o {iso_dest} {iso_dir}"
     subprocess.check_output(cmd1,shell=True)
+    shutil.copy(src_file, dst_file)
 
 
 def prefix2netmask(prefs):
@@ -466,7 +477,7 @@ def create_dhcp_config_v2(d1):
     p1['vm'] = {}
     for i in d1['vm'].keys():
         # if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','ubuntu']:
-        if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','vaoscx','vsrx']:
+        if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosevolved','vjunosrouter','sonic','vaoscx','vsrx','linuxrouter']:
             if d1['vm'][i]['type'] == 'sonic':
                 p1['vm'].update({i : {'hostname': i,'mac' : d1['vm'][i]['mac'],'ip' : d1['vm'][i]['ip_address'],'conf' : 0}})
             else:
@@ -495,10 +506,15 @@ def junos_config(d1):
 def print_syntax():
     print("usage : vlab.py <command>")
     print("commands are : ")
-    print("  addbr     : create linux bridge for VM interconnectivity ")
-    print("  create    : to create VMs on the hypervisor")
-    print("  start     : to start VMs on the hypervisor")
-    print("  config    : create configuration for DHCPD and TFTPD")
+    print("  addbr      : create linux bridge for VM interconnectivity ")
+    print("  create     : to create VMs on the hypervisor")
+    print("  start      : to start VMs on the hypervisor")
+    print("  stop       : to stop VMs on the hypervisor")
+    print("  del        : to delete VMs on the hypervisor")
+    print("  lxc-create : to create LXC containers on the hypervisor")
+    print("  lxc-start  : to start LXC containers on the hypervisor")
+    print("  lxc-delete : to delete LXC containers on the hypervisor")
+    print("  config     : create configuration for DHCPD and TFTPD")
 
 def create_config(d1):
     create_dhcp_config = create_dhcp_config_v2
@@ -507,16 +523,24 @@ def create_config(d1):
     get_mac_fxp0(d1)
     #print(d1)
     print("writing configuration for the network devices")
-    # create_netdev_config(d1)
+    # s1=subprocess.check_output("ls /vm/lab12",shell=True)
+    # print(s1)
+    create_netdev_config(d1)
+    # s1=subprocess.check_output("ls /vm/lab12",shell=True)
+    # print(s1)
     print("Creating dhcpd config")
 
     create_dhcp_config(d1)
     #create_apstra_dhcp_config(d1)
     print("files are created on directory ./result")
-    print("upload file dhcpd.conf into dhcp server /etc/dhcpd/dhcpd.conf")
+    if create_dhcp_config == create_dhcp_config_v2:
+        print("upload file kea-dhcp4-server.conf into dhcp server /etc/kea/kea-dhcp4-server.conf")
+    else:
+        print("upload file dhcpd.conf into dhcp server /etc/dhcpd/dhcpd.conf")
     print(f"upload junos configuration files ({junos_config(d1)}), into root directory of tftp server")
     print("Adding entries into  file ~/.ssh/config")
     add_to_ssh_config(d1)
+    
 
 def check_argv(argv):
     retval={}
@@ -547,6 +571,8 @@ def check_argv(argv):
                         'vjunosevolved':f"{'/'.join(t1)}/vjunosevolved.j2",
                         'vaoscx':f"{'/'.join(t1)}/vaoscx.j2",
                         'aoscx':f"{'/'.join(t1)}/aoscx.j2",
+                        'linuxroutercfg':f"{'/'.join(t1)}/linuxroutercfg.j2",
+                        'linuxrouter':f"{'/'.join(t1)}/linuxrouter.j2",
                         "ssh_config" : f"{'/'.join(t1)}/ssh_config.j2"
             }
             retval['DEST_DIR'] = './result'
@@ -717,9 +743,10 @@ def define_vm(d1):
             disk_type = d1['vm'][i]['type']
             # cmd = f"cp {d1['disk'][disk_type]} {disk}"
             cmd = f"qemu-img create -b {d1['disk'][disk_type]} -f qcow2 -F qcow2 {disk}"
-            print(f"copying file from {d1['disk'][disk_type]} to {disk}")
-            data1={}
+            # cmd = f"cp {d1['disk'][disk_type]} {disk}"
+            print(f"creating disk image from {d1['disk'][disk_type]} to {disk}")
             subprocess.check_output(cmd,shell=True)
+            data1={}
             if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosrouter']:
                 #cmd="virsh capabilities"
                 #cpu_model = xmltodict.parse(subprocess.check_output(cmd,shell=True).decode())['capabilities']['host']['cpu']['model'].split("-")[0]
@@ -760,7 +787,7 @@ def define_vm(d1):
                         else:
                             data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
                         p+=1
-                pprint.pprint(data1)
+                # pprint.pprint(data1)
                 with open(d1['template'][vm_type]) as f1:
                     template1 = f1.read()
                     cmd=Template(template1).render(data1)
@@ -805,7 +832,7 @@ def define_vm(d1):
                         else:
                             data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
                         p+=1
-                pprint.pprint(data1)
+                # pprint.pprint(data1)
                 with open(d1['template'][vm_type]) as f1:
                     template1 = f1.read()
                     cmd=Template(template1).render(data1)
@@ -850,7 +877,7 @@ def define_vm(d1):
                         else:
                             data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
                         p+=1
-                pprint.pprint(data1)
+                # pprint.pprint(data1)
                 with open(d1['template'][vm_type]) as f1:
                     template1 = f1.read()
                     cmd=Template(template1).render(data1)
@@ -894,7 +921,7 @@ def define_vm(d1):
                     else:
                         data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
                     p+=1
-                pprint.pprint(data1)
+                # pprint.pprint(data1)
                 with open(d1['template'][vm_type]) as f1:
                     template1 = f1.read()
                     cmd=Template(template1).render(data1)
@@ -972,6 +999,51 @@ def define_vm(d1):
                 with open(d1['template']['vjunosevolved']) as f1:
                     template1 = f1.read()
                     cmd=Template(template1).render(data1)
+            elif d1['vm'][i]['type'] == 'linuxrouter':
+                #cmd="virsh capabilities"
+                #cpu_model = xmltodict.parse(subprocess.check_output(cmd,shell=True).decode())['capabilities']['host']['cpu']['model'].split("-")[0]
+                cpu_model = "IvyBridge"
+                vm_type = d1['vm'][i]['type']
+                data1['name']=i
+                data1['disk']=disk
+                data1['vcpu']=4
+                data1['ram']=4096
+                data1['cpu_model']=cpu_model
+                data1['interfaces']={}
+                if 'type' in d1['mgmt'].keys():
+                    if d1['mgmt']['type'] == 'ovs':
+                        if 'vlan' in d1['mgmt'].keys():
+                            vlantemp = d1['mgmt']['vlan']
+                        else:
+                            vlantemp = 0
+                        data1['interfaces']['mgmt']={
+                            'bridge' : d1['mgmt']['bridge'],
+                            'index' : 1,
+                            'vlan': vlantemp,
+                            'ovs': '1' 
+                        } 
+                else:
+                    data1['interfaces']['mgmt']={
+                        'bridge' : d1['mgmt']['bridge'],
+                        'index' : 1,
+                        'ovs':0
+                    }
+                p=2
+                ports= list(d1['vm'][i]['port'].keys())
+                _ =ports.sort()
+                for j in ports:
+                    if j != 'lo0':
+                        # t1=f"ge{j.split('/')[2]}"
+                        t1 = j
+                        if d1['vm'][i]['port'][j]['bridge'] in d1['ovs']:
+                            data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':1}
+                        else:
+                            data1['interfaces'][t1]={'bridge':d1['vm'][i]['port'][j]['bridge'],'index':p,'ovs':0}
+                        p+=1
+                # pprint.pprint(data1)
+                with open(d1['template'][vm_type]) as f1:
+                    template1 = f1.read()
+                    cmd=Template(template1).render(data1)
             # elif d1['vm'][i]['type'] == 'alpine':
             # 	data1['name']=i
             # 	data1['disk']=disk
@@ -1032,7 +1104,13 @@ def define_vm(d1):
             # 		cmd=Template(template1).render(data1)
             print(f"installing VM {i} on the hypervisor")
             #print(cmd)
-            subprocess.check_output(cmd,shell=True)
+            # s1=subprocess.check_output("ls /vm/lab12",shell=True)
+            # print(s1)
+            s1=subprocess.check_output(cmd,shell=True)
+            # print(s1)
+            # s1=subprocess.check_output("ls /vm/lab12",shell=True)
+            # print(s1)
+            #time.sleep(5)
     else:
         print("VMs are defined")
 
@@ -1077,6 +1155,8 @@ def create_vm(d1):
         define_vm(d1)
     else:
         print("VMs are OK")
+    # s1=subprocess.check_output("ls /vm/lab12",shell=True)
+    # print(s1)
 
 def delete_known_hosts(d1):
     print("deleting entry from ~/.ssh/known_hosts")
@@ -1129,7 +1209,10 @@ def create_ssh_config(d1):
     for i in list_vm:
         new_ssh_config.append(f"Host {i}")
         new_ssh_config.append(f"  hostname {d1['vm'][i]['ip_address']}")
-        new_ssh_config.append(f"  user {d1['junos_login']['user']}")
+        if d1['vm'][i]['type'] == 'linuxrouter':
+            new_ssh_config.append(f"  user ubuntu")
+        else:
+            new_ssh_config.append(f"  user {d1['junos_login']['user']}")
         # ssh_key is disabled, related to  DSSKey class  that has been removed from paramiko modules
         # which make pyez doesn't work.
         # new_ssh_config.append(f"  IdentityFile {d1['junos_login']['ssh_key_priv']}")
@@ -1425,7 +1508,8 @@ def list_bridge(d1):
 
 def get_aoxcx_config(d1,i):
     ip_address = d1['vm'][i]['ip_address']
-    url1=f"https://{ip_address}/rest/v10.18/login"
+    url0=f"https://{ip_address}/rest/v10.18/"
+    url1=f"{url0}login"
     data1 = {'username':d1['junos_login']['user'],'password':d1['junos_login']['password']}
     session=requests.session()
     login=session.post(url1,data=data1,verify=False)
@@ -1437,9 +1521,7 @@ def get_aoxcx_config(d1,i):
         if not os.path.exists(d1['config_dir']):
             os.makedirs(d1['config_dir'])
         dest_file = f"{d1['config_dir']}/{i}.conf"
-        #url2="https://192.168.250.12/rest/v10.18/system/interfaces"
-        url2=f"https://{ip_address}/rest/v10.18/configs/running-config"
-        #url2="https://192.168.250.12/rest/v10.18/configs"
+        url2=f"{url0}configs/running-config"
         #headers1 = {"Accept": "application/json"}
         headers1 = {"Accept": "text/plain"}
         result= session.get(url2,verify=False,headers=headers1)
@@ -1451,7 +1533,7 @@ def get_aoxcx_config(d1,i):
         # for i in d1:
         #     print(i)
         # logout
-        url3=f"https://{ip_address}/rest/v10.18/logout"
+        url3=f"{url0}logout"
         logout=session.post(url3,verify=False)
         #print(logout)
 
@@ -1487,3 +1569,19 @@ def get_device_config(d1):
             get_junos_config(d1,i)
         elif d1['vm'][i]['type'] in ['vaoscx']:
             get_aoxcx_config(d1,i)
+
+def pushconfig(d1):
+    for i in d1['vm'].keys():
+        if d1['vm'][i]['type'] == 'linuxrouter':
+            print(f"Uploading {d1['DEST_DIR']}/{i}.conf to VM {i} ")
+            ssh=paramiko.SSHClient()
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(hostname=d1['vm'][i]['ip_address'],username='ubuntu',password=d1['junos_login']['password'])
+            sftp=ssh.open_sftp()
+            src_file = f"{d1['DEST_DIR']}/{i}.conf"
+            sftp.put(src_file,'set_host.sh')
+            cmd1 = "sh ~/set_host.sh"
+            stdin_, stdout_, stderr_ = ssh.exec_command(cmd1)
+            print("finish uploading and executing set_host.sh")
+            ssh.close()
+    

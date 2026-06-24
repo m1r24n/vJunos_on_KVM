@@ -108,5 +108,6 @@ Dhcp4:
     pools:
     - pool: {{ range_min }} - {{ range_max }}
     subnet: {{ subnet }}
+    match-client-id: false
 
   valid-lifetime: 3600

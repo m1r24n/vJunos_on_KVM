@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
+# created by irzan
 import lib1
 import yaml
 import sys
-import pprint
+import pprint, subprocess
 ## main function
 # This is the main function
 # the second function
@@ -19,7 +20,7 @@ if d1:
     elif d1['cmd'] == 'delbr':
         lib1.del_bridge(d1)
     elif d1['cmd'] == 'create':
-        lib1.create_netdev_config(d1)
+        #lib1.create_netdev_config(d1)
         lib1.create_vm(d1)
         lib1.create_config(d1)
         lib1.delete_known_hosts(d1)
@@ -52,8 +53,11 @@ if d1:
         lib1.delete_lxc(d1)
     elif d1['cmd'] == 'get_netdev_config':
         lib1.get_device_config(d1)
+    elif d1['cmd'] == 'pushconfig':
+        lib1.pushconfig(d1)
     else:
         print(f"command {d1['cmd']} is not defined yet")
+        lib1.print_syntax()
 
 
 

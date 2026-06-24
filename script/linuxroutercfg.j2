@@ -1,0 +1,134 @@
+#!/bin/bash 
+cat << EOF | sudo tee /etc/hostname
+{{ hostname }}
+EOF
+
+cat << EOF | sudo tee /etc/netplan/01_net.yaml
+network:
+    version: 2
+    ethernets:
+        eth0:
+            dhcp4: false
+            dhcp6: false
+            addresses:
+            - {{ ip_address }}
+        {% if interfaces -%}
+        {% for intf in interfaces %}
+        {% if intf == 'lo0' -%}
+        lo:
+        {% else %}
+        {{ intf }}:
+        {% endif %}   
+            {% if intf != "lo0" -%}
+            dhcp4: false
+            dhcp6: false
+            {% endif -%}
+            {% if interfaces[intf].inet or interfaces[intf].inet6 -%}
+            addresses:
+            {% if interfaces[intf].inet -%}
+            - {{ interfaces[intf].inet }}
+            {% endif -%}
+            {% if interfaces[intf].inet6 != 1 %}
+            - {{ interfaces[intf].inet6 }}
+            {% endif -%}
+            {% endif -%}
+            {% if interfaces[intf].mtu -%}
+            mtu: {{ interfaces[intf].mtu }}
+            {% endif -%}
+        {% endfor -%}
+        {% endif %}        
+EOF
+
+
+cat << EOF | tee ~/.ssh/authorized_keys
+{{ssh_key}}
+EOF
+
+# sleep 2
+# sudo netplan apply
+# sleep 2
+
+sudo sed -i -e "s/ospfd=no/ospfd=yes/" /etc/frr/daemons
+sudo sed -i -e "s/bgpd=no/bgpd=yes/" /etc/frr/daemons
+sudo sed -i -e "s/isisd=no/isisd=yes/" /etc/frr/daemons
+sudo sed -i -e "s/bfdd=no/bfdd=yes/" /etc/frr/daemons
+
+# sudo systemctl stop frr
+# sleep 2
+
+cat << EOF | sudo tee  /etc/frr/frr.conf
+{% for intf in interfaces -%}
+{% if intf == 'lo0' -%}
+interface lo
+{% else -%}
+interface {{intf}}
+{% endif -%}
+  {% if intf == 'lo0' -%}
+  {% if protocols.ospf -%}
+  ip ospf area 0.0.0.0
+  ip ospf passive
+  {% endif -%}
+  {% if protocols.isis -%}
+  {% endif -%}
+  ip router isis NET1
+  ipv6 router isis NET1
+  isis passive
+  {% endif -%}
+  {% if interfaces[intf].ospf -%}
+  {% if intf != 'lo0' -%}
+  ip ospf area 0.0.0.0
+  ip ospf network point-to-point
+  ip ospf bfd
+  ip ospf bfd profile BFD1
+  {% endif -%}
+  {% endif -%}
+  {% if interfaces[intf].isis -%}
+  {% if intf != 'lo0' -%}
+  ip router isis NET1
+  ipv6 router isis NET1
+  isis bfd
+  isis bfd profile BFD1
+  isis network point-to-point
+  {% endif -%}
+  {% endif -%}
+exit
+{% endfor -%}
+!
+{% if protocols.ospf -%}
+router ospf
+  ospf router-id {{router_id}}
+exit
+{% endif -%}
+
+{% if protocols.isis -%}
+router isis NET1
+  is-type level-2-only
+  net {{interfaces['lo0'].iso }}
+  topology ipv6-unicast
+exit
+{% endif -%}
+!
+bfd
+ profile BFD1
+  echo transmit-interval 100
+  echo receive-interval 100
+ exit
+ !
+exit
+!
+end
+EOF
+
+# sudo systemctl start frr
+# sleep 2
+
+# sudo rm /etc/machine-id
+# sudo systemd-machine-id-setup
+uuidgen  | sed -e 's/-//g' |  sudo tee /etc/machine-id
+
+sleep 5
+sudo reboot
+
+echo "done with the script"
+
+
