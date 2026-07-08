@@ -1246,7 +1246,7 @@ def delete_vm(d1):
     #stop_vm(d1)
     for i in d1['vm'].keys():
         print(f"deleting vm {i}")
-        if d1['cmd'] == 'del':
+        if d1['cmd'] == 'rm':
             cmd = f"virsh destroy {i}"
             subprocess.check_output(cmd,shell=True)
         #cmd = f"virsh destroy {i}"
