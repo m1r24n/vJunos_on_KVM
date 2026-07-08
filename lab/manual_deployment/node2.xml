@@ -6,7 +6,7 @@
 <!--  All rights reserved. -->
 
 <domain xmlns:ns0="http://libvirt.org/schemas/domain/qemu/1.0" type="kvm">
-  <name>r1</name>
+  <name>node2</name>
   <memory unit="KiB">5242880</memory>
   <currentMemory unit="KiB">5242880</currentMemory>
   <vcpu placement="static">4</vcpu>
@@ -37,47 +37,41 @@
     <emulator>/usr/bin/qemu-system-x86_64</emulator>
     <disk device="disk" type="file">
       <driver cache="writeback" name="qemu" type="qcow2"/>
-      <source file="/disk2/vm/vjunos/r1.qcow2"/>
+      <source file="/disk2/vm/manual/node2.qcow2"/>
       <target dev="vda" bus="virtio"/>
-     </disk>
+    </disk>
     <controller index="0" model="pci-root" type="pci">
       <alias name="pci.0"/>
     </controller>
-    <interface type='direct'>
-       <source dev='eno1' mode='bridge'/>
+    <interface type='bridge'>
+      <source bridge="br0"/>
       <model type="virtio"/>
       <alias name="net0"/>
     </interface>
     <interface type="bridge">
-      <source bridge="lan1"/>
-      <model type="virtio"/>
-       <mtu size='9600'/>
-      <alias name="ge000"/>
+      <source bridge="lan2"/>
       <virtualport type='openvswitch'/>
+      <model type="virtio"/>
+       <mtu size='9600'/>
+      <alias name="net1"/>
     </interface>
     <interface type="bridge">
-      <source bridge="link1"/>
+      <source bridge="wan1"/>
       <model type="virtio"/>
        <mtu size='9600'/>
-      <alias name="ge001"/>
-    </interface>
-      <interface type="bridge">
-      <source bridge="link2"/>
-      <model type="virtio"/>
-       <mtu size='9600'/>
-      <alias name="ge002"/>
+      <alias name="net2"/>
     </interface>
     <interface type="bridge">
-      <source bridge="link3"/>
+      <source bridge="wan2"/>
       <model type="virtio"/>
-       <mtu size='9600'/>
-      <alias name="ge003"/>
+      <mtu size='9600'/>
+      <alias name="net1"/>
     </interface>
     <serial type="tcp">
-      <source host="127.0.0.1" mode="bind" service="65101"/>
+      <source host="127.0.0.1" mode="bind" service="8611"/>
       <protocol type="telnet"/>
       <target port="0"/>
-      <log file='/disk2/vm/vjunos/r1.log'/>
+      <log file='/tmp/node2.log'/>
       <alias name="serial0"/>
     </serial>
     <memballoon model="virtio">

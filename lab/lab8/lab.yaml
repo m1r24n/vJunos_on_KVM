@@ -1,10 +1,10 @@
 ---
 disk: 
-  vjunosrouter: /vm/images/vJunos-router-25.4R1.12.qcow2
-  vjunosswitch: /vm/images/vJunos-switch-25.4R1.12.qcow2
-  vaoscx: /vm/images/arubaoscx-disk-image.qcow2
-  sonic: /vm/images/sonic-vm.qcow2
-vm_dir: /vm/lab8
+  vjunosrouter: /disk2/vm/images/vJunos-router-26.2R1.7.qcow2
+  # vjunosswitch: /disk2/vm/images/vJunos-switch-25.4R1.12.qcow2
+  # vaoscx: /disk2/vm/images/arubaoscx-disk-image.qcow2
+  # sonic: /disk2/vm/images/sonic-vm.qcow2
+vm_dir: /disk2/vm/lab8
 mgmt:
   bridge: br0
 ovs:
