@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# created by irzan
+# created by irzan me too
 import lib1
 import yaml
 import sys
@@ -28,6 +28,8 @@ if d1:
         lib1.start_vm(d1)
         lib1.set_bridge(d1)
     elif d1['cmd'] == 'del':
+        lib1.delete_vm(d1)
+    elif d1['cmd'] == 'rm':
         lib1.delete_vm(d1)
     elif d1['cmd'] == 'stop':
         lib1.stop_vm(d1)

@@ -376,20 +376,68 @@ def create_netdev_config(d1):
             else:
                 config1=Template(linuxroutercfg_template).render(p1)
                 # print(config1)
-            if not os.path.exists(d1['DEST_DIR']):
-                os.makedirs(d1['DEST_DIR'])
+            # if not os.path.exists(d1['DEST_DIR']):
+            #     os.makedirs(d1['DEST_DIR'])
             # else:
             # 	if not os.path.isdir(d1['DEST_DIR']):
             # 		os.remove(d1['DEST_DIR'])
             # 		os.makedirs(d1['DEST_DIR'])
+            
+            if not os.path.exists(d1['DEST_DIR']):
+                #print(f"DEST_DIR {d1['DEST_DIR']} is not exist")
+                os.makedirs(d1['DEST_DIR'])
+            # else:
+            #     print(f"DEST_DIR {d1['DEST_DIR']} is exist")
             filename = f"{d1['DEST_DIR']}/{i}.conf"
             with open(filename,"w") as f:
                 f.write(config1)
             if d1['vm'][i]['type'] == 'vsrx':
-                create_vsrx_config(d1,i)
+                create_junos_config_cdrom(d1,i)
+            #print("creating config")
+            if 'cdrom' in d1.keys():
+                #print("cdrom exist")
+                if d1['cdrom'] and d1['vm'][i]['type'] in ['vjunosevolved']:
+                    #print("create cd")
+                    create_junos_config_cdrom(d1,i)
+                else:
+                    print("not creating cd")
             #
         
-def create_vsrx_config(d1,i):
+def create_junos_config_cdrom(d1,i):
+    if d1['vm'][i]['type'] == 'vsrx':
+        create_vsrx_config_cdrom(d1,i)
+    else:
+        print("creating  vjunos iso config")
+        iso_dest = f"{d1['vm_dir']}/{i}_config.iso"
+        src_file = f"{d1['DEST_DIR']}/{i}.conf"
+        cmd1=f"sudo ../../script/make-config.sh {src_file} {iso_dest}"
+        subprocess.check_output(cmd1,shell=True)
+        # iso_dir = f"{d1['DEST_DIR']}/iso"
+        # # iso_file = f"{d1['DEST_DIR']}/iso"
+        
+        # src_file = f"{d1['DEST_DIR']}/{i}.conf"
+        # dst_dir = f"{d1['DEST_DIR']}/config/"
+        # # dir_path = pathlib.Path(iso_dir)
+        # # dir_path.mkdir(parents=True, exist_ok=True)
+        # if not os.path.isdir(iso_dir):
+        # # os.remove(d1['DEST_DIR'])
+        #     os.makedirs(iso_dir)
+        # if not os.path.isdir(dst_dir):
+        # # os.remove(d1['DEST_DIR'])
+        #     os.makedirs(dst_dir)
+        # # else:
+        # #     print(f"DEST_DIR {d1['DEST_DIR']} is exist")
+        # #print(f"source file {src_file}, destination file {dst_file}")
+        # shutil.copy(src_file, dst_dir)
+        # cmd1 = f"tar cvzf {iso_dir}/mnt-config.tgz {dst_dir}"
+        # print("write config iso")
+        # cmd1=f"mkisofs -l -o {iso_dest} {iso_dir}"
+        # subprocess.check_output(cmd1,shell=True)
+        # shutil.copy(src_file, iso_dest)
+
+
+def create_vsrx_config_cdrom(d1,i):
+    print("creating vsrx config iso")
     iso_dir = f"{d1['DEST_DIR']}/iso"
     # iso_file = f"{d1['DEST_DIR']}/iso"
     iso_dest = f"{d1['vm_dir']}/{i}_config.iso"
@@ -397,11 +445,14 @@ def create_vsrx_config(d1,i):
     dst_file = f"{d1['DEST_DIR']}/iso/juniper.conf"
     # dir_path = pathlib.Path(iso_dir)
     # dir_path.mkdir(parents=True, exist_ok=True)
-    if not os.path.isdir(d1['DEST_DIR']):
+    if not os.path.isdir(iso_dir):
       # os.remove(d1['DEST_DIR'])
       os.makedirs(iso_dir)
+    # else:
+    #     print(f"DEST_DIR {d1['DEST_DIR']} is exist")
+    #print(f"source file {src_file}, destination file {dst_file}")
     shutil.copy(src_file, dst_file)
-    print("write vsrx config iso")
+    print("write config iso")
     cmd1=f"mkisofs -l -o {iso_dest} {iso_dir}"
     subprocess.check_output(cmd1,shell=True)
     shutil.copy(src_file, dst_file)
@@ -522,10 +573,10 @@ def create_config(d1):
     print("getting mac address info")
     get_mac_fxp0(d1)
     #print(d1)
-    print("writing configuration for the network devices")
-    # s1=subprocess.check_output("ls /vm/lab12",shell=True)
-    # print(s1)
-    create_netdev_config(d1)
+    # print("writing configuration for the network devices")
+    # # s1=subprocess.check_output("ls /vm/lab12",shell=True)
+    # # print(s1)
+    # create_netdev_config(d1)
     # s1=subprocess.check_output("ls /vm/lab12",shell=True)
     # print(s1)
     print("Creating dhcpd config")
@@ -736,6 +787,7 @@ def del_bridge(d1):
 def define_vm(d1):
     if d1['vm_not_defined']:
         print("defining VM")
+        create_netdev_config(d1)
         for i in d1['vm_not_defined']:
             if not os.path.exists(d1['vm_dir']):
                 os.makedirs(d1['vm_dir'])
@@ -746,6 +798,8 @@ def define_vm(d1):
             # cmd = f"cp {d1['disk'][disk_type]} {disk}"
             print(f"creating disk image from {d1['disk'][disk_type]} to {disk}")
             subprocess.check_output(cmd,shell=True)
+            print("creating network devices configuration")
+            # create_netdev_config(d1)
             data1={}
             if d1['vm'][i]['type'] in  ['vjunosswitch','vjunosrouter']:
                 #cmd="virsh capabilities"
@@ -935,6 +989,9 @@ def define_vm(d1):
                 cpu_model = "IvyBridge"
                 data1['name']=i
                 data1['disk']=disk
+                if 'cdrom' in d1.keys():
+                    if d1['cdrom']:
+                        data1['cdrom'] = f"{d1['vm_dir']}/{i}_config.iso"
                 # data1['disk_config']=disk_cfg
                 data1['vcpu']=4
                 data1['ram']=8192
@@ -1175,7 +1232,7 @@ def start_vm(d1):
     for i in d1['vm'].keys():
         print(f"starting {i}")
         cmd = f"virsh start {i}"
-        subprocess.check_output(cmd,shell=True)
+        subprocess.check_output(cmd,shell=True) 
 
 def stop_vm(d1):
     print("stop VMs on hypervisor")
@@ -1188,15 +1245,20 @@ def delete_vm(d1):
     print("deleting VMs on hypervisor")
     #stop_vm(d1)
     for i in d1['vm'].keys():
-        print(f"stop vm {i}")
+        print(f"deleting vm {i}")
+        if d1['cmd'] == 'del':
+            cmd = f"virsh destroy {i}"
+            subprocess.check_output(cmd,shell=True)
         #cmd = f"virsh destroy {i}"
         #subprocess.check_output(cmd,shell=True)
         cmd = f"virsh undefine --nvram {i}"
         subprocess.check_output(cmd,shell=True)
-        disk = d1['vm_dir'] + f"/{i}.img"
-        print(f"deleting disk {disk}")
-        cmd = f"rm {disk}"
-        subprocess.check_output(cmd,shell=True)
+        # disk = d1['vm_dir'] + f"/{i}.img"
+        # print(f"deleting disk {disk}")
+        # cmd = f"rm {disk}"
+        # subprocess.check_output(cmd,shell=True)
+    cmd = f"rm -rf {d1['vm_dir']}"
+    subprocess.check_output(cmd,shell=True)
     del_bridge(d1)
 
 def create_ssh_config(d1):

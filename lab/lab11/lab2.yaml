@@ -31,7 +31,7 @@ ip_pool:
     min: 192.168.250.1
     max: 192.168.250.200
 fabric:
-  ipv4_prefix: 10.1.100.0/24
+  inet_prefix: 10.1.100.0/24
   #ipv6_prefix: fc00:dead:beef:ffff:ffff::/80
   topology:
   - [sw1,ge-0/0/1,fw1,ge-0/0/0,0x11]

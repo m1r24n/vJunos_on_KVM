@@ -1,5 +1,8 @@
 virt-install --name {{name}} \
     --disk {{disk}},device=disk \
+    {%if cdrom -%}
+    --disk {{cdrom}},device=cdrom \
+    {%endif -%}
     --cpu {{cpu_model}},+vmx \
     --boot uefi,loader_secure=no \
     {% if bx  -%}
