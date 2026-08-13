@@ -609,6 +609,13 @@ def check_argv(argv):
                 d1 = f.read()	
             retval = yaml.load(d1,Loader=yaml.FullLoader)
             retval['cmd'] = argv[1]
+            if argv[1] =='backupconfig' and (len(argv)==3):
+                if argv[2] in ['json','set','text','xml']:
+                    retval['backup_format'] = argv[2]
+                else:
+                    retval['backup_format'] = 'text'
+            else:
+                retval['backup_format'] = 'text'
             t1 = argv[0].split('/')
             _ = t1.pop()
             retval['template']={
@@ -1448,7 +1455,7 @@ nameserver {{dns}}
             cmd = ["lxc","query", "--request", "PATCH", f"/1.0/instances/{i}","--data",data5]
             result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             output1 = result.stdout
-            if d1['lxc'][i]['type'] == 'alpine':
+            if d1['lxc'][i]['type'] in ['alpine','router']:
                 net_cfg4 = t1.render(net_cfg3)
                 cmd = ["lxc", "file" , "push", "interfaces.tmp",  f"{i}/etc/network/interfaces"]
             elif d1['lxc'][i]['type'] == 'ubuntu':
@@ -1459,8 +1466,8 @@ nameserver {{dns}}
             with open("interfaces.tmp","w") as f1:
                 f1.write(net_cfg4)
             # cmd = ["lxc", "file" , "push", "interfaces.tmp",  f"{i}/etc/network/interfaces"]
-            result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            output1 = result.stdout
+            # result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            # output1 = result.stdout
             os.remove("interfaces.tmp")
             if d1['lxc'][i]['type'] == "router":
                 frr_data = d1['lxc'][i]['bgp']
@@ -1567,6 +1574,7 @@ def list_bridge(d1):
         output1 = result.stdout
         cmd=["sudo","sysctl","-w", f"net.ipv6.conf.{i}.disable_ipv6=1"]
         result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    print(o4)
 
 def get_aoxcx_config(d1,i):
     ip_address = d1['vm'][i]['ip_address']
@@ -1646,4 +1654,41 @@ def pushconfig(d1):
             stdin_, stdout_, stderr_ = ssh.exec_command(cmd1)
             print("finish uploading and executing set_host.sh")
             ssh.close()
-    
+
+def backupconfig(d1):
+    config_dir = Path("./config")
+    if config_dir.is_dir():
+        print("The directory exists.")
+    elif config_dir.is_file():
+        print("./config is a file delete it")
+        config_dir.unlink()
+        config_dir.mkdir(parents=True, exist_ok=True)
+    else: 
+        config_dir.mkdir(parents=True, exist_ok=True)
+    for i in d1['vm'].keys():
+        if d1['vm'][i]['type'] in ['vjunosrouter','vjunosswitch','vjunosevolved']:
+            print(f"creating backup configuration for {i}")
+            ip_address=d1['vm'][i]['ip_address']
+            with Device(host=ip_address,user=d1['junos_login']['user'],password=d1['junos_login']['password']) as dev:
+                config0 = dev.rpc.get_config(options={'format':d1['backup_format']})
+                if d1['backup_format'] == 'json':
+                    config1 = config0
+                    # pprint.pprint(config1,indent=2)
+                else:
+                    # config1 = etree.tostring(config0, encoding='unicode', pretty_print=True)
+                    # print(etree.tostring(config1, encoding='unicode', pretty_print=True))
+                    config1 = etree.tostring(config0, encoding='unicode', pretty_print=True).replace('<configuration-set>','').replace('</configuration-set>','').replace('<configuration-text>','').replace('</configuration-text>','')
+            # if d1['backup_format'] in ['text','set']:
+            #     if d1['backup_format'] == 'text':
+            #         remove_line = "configuration-text"
+            #     elif d1['backup_format'] == 'set':
+            #         remove_line = "configuration-set"
+            #     config2 = config1.split("\n")
+            #     config3 = [ x for x in config2 if remove_line not in x ]
+            #     config1 = "\n".join(config3)
+            with open(f"./{config_dir}/{i}.{d1['backup_format']}","w") as f1:
+                if d1['backup_format'] == 'json':
+                    json.dump(config1,f1,indent=4)
+                else:
+                    f1.write(config1)
+            

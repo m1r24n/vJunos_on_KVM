@@ -53,10 +53,12 @@ if d1:
     elif d1['cmd'] == 'lxc-delete':
         lib1.stop_lxc(d1)
         lib1.delete_lxc(d1)
-    elif d1['cmd'] == 'get_netdev_config':
-        lib1.get_device_config(d1)
+    # elif d1['cmd'] == 'get_netdev_config':
+    #     lib1.get_device_config(d1)
     elif d1['cmd'] == 'pushconfig':
         lib1.pushconfig(d1)
+    elif d1['cmd'] == 'backupconfig':
+        lib1.backupconfig(d1)
     else:
         print(f"command {d1['cmd']} is not defined yet")
         lib1.print_syntax()

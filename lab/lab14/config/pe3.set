@@ -1,0 +1,100 @@
+
+set version 26.2R1.7
+set system host-name pe3
+set system root-authentication encrypted-password "$1$Ed0idXMW$vApsgMJc3koNqyAqX4pZ3."
+set system login user admin uid 2000
+set system login user admin class super-user
+set system login user admin authentication encrypted-password "$1$Ed0idXMW$vApsgMJc3koNqyAqX4pZ3."
+set system login user admin authentication ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDCrPcm2KQxE7DING6xOrPqeJWHn+Jx0tiySIs2FIvGtftMZUJDbWBcu60/fKMMEQuN7ttg4hLQGvyemOWPSrl1wCjw5yGhzaY+NF42aiEEM2QTyC+dnokRMPzylZziJ+IptrO4JmDwDUZvIdYmpg40PBpA1FcgUxNULgsSVstPn9TGjcJYeUoVzXFyAtsO8pEoCndGP7g6QKZ3fLLfsWO4lMFrDJjyHxCKSYlXsFgLufTJPkgeHT9bP8o+LaTDPf2pX/Xow8RGh5XtjnvzHXrP14kyu7KtasuVQHxdbmhQivZbunymlZAPYS9uU8f962zy4qlpQb3TPTc9RFhy4wcgh25yTd4GgJorzHJBKowXg8yhqJNB7iWUz0mnqwI8DsvBuvselvu+UOLDV9Gbul6FYYpTzlpLWLbsLsdg1SsYHRpofwrNrLLoMtvDY03KT4Wzlt4+dw0JZMfvHx66stUgnNkDJxFodx/JOF8e97uFSn+E3T8RoeBQqe/8VxRVjTE= irzan@home2"
+set system services netconf ssh
+set system services ssh root-login allow
+set system services ssh sftp-server
+set system arp aging-timer 5
+set system management-instance
+set system syslog file interactive-commands interactive-commands any
+set system syslog file messages any notice
+set system syslog file messages authorization info
+set chassis network-services enhanced-ip
+set chassis evpn-vxlan-default-switch-support
+set interfaces ge-0/0/0 flexible-vlan-tagging
+set interfaces ge-0/0/0 encapsulation flexible-ethernet-services
+set interfaces ge-0/0/0 unit 101 vlan-id 101
+set interfaces ge-0/0/0 unit 101 family inet address 192.168.200.4/31
+set interfaces ge-0/0/0 unit 101 family inet6 address fc00:dead:beef:a200::4/127
+set interfaces ge-0/0/0 unit 201 vlan-id 201
+set interfaces ge-0/0/0 unit 201 family inet address 192.168.200.4/31
+set interfaces ge-0/0/0 unit 201 family inet6 address fc00:dead:beef:a200::4/127
+set interfaces ge-0/0/0 unit 211 encapsulation vlan-bridge
+set interfaces ge-0/0/0 unit 211 vlan-id 211
+set interfaces ge-0/0/0 unit 211 family bridge
+set interfaces ge-0/0/0 unit 301 encapsulation vlan-bridge
+set interfaces ge-0/0/0 unit 301 vlan-id 301
+set interfaces ge-0/0/0 unit 301 family bridge
+set interfaces ge-0/0/1 mtu 9000
+set interfaces ge-0/0/1 unit 0 family inet address 10.1.100.16/31
+set interfaces ge-0/0/1 unit 0 family iso
+set interfaces ge-0/0/1 unit 0 family inet6
+set interfaces ge-0/0/1 unit 0 family mpls
+set interfaces ge-0/0/2 mtu 9000
+set interfaces ge-0/0/2 unit 0 family inet address 10.1.100.18/31
+set interfaces ge-0/0/2 unit 0 family iso
+set interfaces ge-0/0/2 unit 0 family inet6
+set interfaces ge-0/0/2 unit 0 family mpls
+set interfaces fxp0 unit 0 family inet address 192.168.250.103/24
+set interfaces irb unit 211 family inet address 172.16.102.1/24
+set interfaces irb unit 211 family inet6 address fc00:dead:beef:a102::1/64
+set interfaces lo0 unit 0 family inet address 10.1.255.3/32
+set interfaces lo0 unit 0 family iso address 49.0001.0001.0001.0003.00
+set interfaces lo0 unit 0 family inet6 address fc00:dead:beef:ffff::3/128
+set policy-options policy-statement to_rr then next-hop self
+set routing-instances cust1 instance-type vrf
+set routing-instances cust1 protocols bgp group to_ce1pe1 neighbor 192.168.200.5 peer-as 4200002003
+set routing-instances cust1 protocols bgp group to_ce1pe1 neighbor fc00:dead:beef:a200::5 peer-as 4200002003
+set routing-instances cust1 interface ge-0/0/0.201
+set routing-instances cust1 vrf-target target:65001:1001
+set routing-instances cust1 vrf-table-label
+set routing-instances evpn1 instance-type evpn
+set routing-instances evpn1 protocols evpn
+set routing-instances evpn1 vlan-id 301
+set routing-instances evpn1 interface ge-0/0/0.301
+set routing-instances evpn1 vrf-target target:65001:3001
+set routing-instances evpn2 instance-type evpn
+set routing-instances evpn2 protocols evpn
+set routing-instances evpn2 vlan-id 211
+set routing-instances evpn2 routing-interface irb.211
+set routing-instances evpn2 interface ge-0/0/0.211
+set routing-instances evpn2 vrf-target target:65001:3211
+set routing-instances evpn2l3 instance-type vrf
+set routing-instances evpn2l3 protocols evpn ip-prefix-routes advertise direct-nexthop
+set routing-instances evpn2l3 interface irb.211
+set routing-instances evpn2l3 vrf-target target:65001:1211
+set routing-instances evpn2l3 vrf-table-label
+set routing-instances mgmt_junos routing-options static route 0.0.0.0/0 next-hop 192.168.250.254
+set routing-options route-distinguisher-id 10.1.255.3
+set routing-options autonomous-system 4200009001
+set protocols bgp group to_rr type internal
+set protocols bgp group to_rr local-address 10.1.255.3
+set protocols bgp group to_rr family inet any
+set protocols bgp group to_rr family inet-vpn any
+set protocols bgp group to_rr family inet6 labeled-unicast explicit-null
+set protocols bgp group to_rr family inet6-vpn any
+set protocols bgp group to_rr family evpn signaling
+set protocols bgp group to_rr export to_rr
+set protocols bgp group to_rr neighbor 10.1.255.15
+set protocols bgp group to_ce2pe2 neighbor 192.168.200.5 peer-as 4200001003
+set protocols bgp group to_ce2pe2 neighbor fc00:dead:beef:a200::5 peer-as 4200001003
+set protocols isis interface ge-0/0/1.0 point-to-point
+set protocols isis interface ge-0/0/2.0 point-to-point
+set protocols isis interface lo0.0 passive
+set protocols isis level 1 disable
+set protocols isis level 2 wide-metrics-only
+set protocols ldp interface ge-0/0/1.0
+set protocols ldp interface ge-0/0/2.0
+set protocols mpls ipv6-tunneling
+set protocols mpls interface ge-0/0/1.0
+set protocols mpls interface ge-0/0/2.0
+set protocols rsvp interface ge-0/0/1.0
+set protocols rsvp interface ge-0/0/2.0
+set protocols lldp interface all
+set protocols lldp interface fxp0 disable
+

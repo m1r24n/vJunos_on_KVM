@@ -1,0 +1,61 @@
+
+set version 26.2R1.7
+set system host-name p1
+set system root-authentication encrypted-password "$1$Ed0idXMW$vApsgMJc3koNqyAqX4pZ3."
+set system login user admin uid 2000
+set system login user admin class super-user
+set system login user admin authentication encrypted-password "$1$Ed0idXMW$vApsgMJc3koNqyAqX4pZ3."
+set system login user admin authentication ssh-rsa "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDCrPcm2KQxE7DING6xOrPqeJWHn+Jx0tiySIs2FIvGtftMZUJDbWBcu60/fKMMEQuN7ttg4hLQGvyemOWPSrl1wCjw5yGhzaY+NF42aiEEM2QTyC+dnokRMPzylZziJ+IptrO4JmDwDUZvIdYmpg40PBpA1FcgUxNULgsSVstPn9TGjcJYeUoVzXFyAtsO8pEoCndGP7g6QKZ3fLLfsWO4lMFrDJjyHxCKSYlXsFgLufTJPkgeHT9bP8o+LaTDPf2pX/Xow8RGh5XtjnvzHXrP14kyu7KtasuVQHxdbmhQivZbunymlZAPYS9uU8f962zy4qlpQb3TPTc9RFhy4wcgh25yTd4GgJorzHJBKowXg8yhqJNB7iWUz0mnqwI8DsvBuvselvu+UOLDV9Gbul6FYYpTzlpLWLbsLsdg1SsYHRpofwrNrLLoMtvDY03KT4Wzlt4+dw0JZMfvHx66stUgnNkDJxFodx/JOF8e97uFSn+E3T8RoeBQqe/8VxRVjTE= irzan@home2"
+set system services netconf ssh
+set system services ssh root-login allow
+set system services ssh sftp-server
+set system arp aging-timer 5
+set system management-instance
+set system syslog file interactive-commands interactive-commands any
+set system syslog file messages any notice
+set system syslog file messages authorization info
+set chassis network-services enhanced-ip
+set chassis evpn-vxlan-default-switch-support
+set interfaces ge-0/0/0 mtu 9000
+set interfaces ge-0/0/0 unit 0 family inet address 10.1.100.1/31
+set interfaces ge-0/0/0 unit 0 family iso
+set interfaces ge-0/0/0 unit 0 family mpls
+set interfaces ge-0/0/1 mtu 9000
+set interfaces ge-0/0/1 unit 0 family inet address 10.1.100.8/31
+set interfaces ge-0/0/1 unit 0 family iso
+set interfaces ge-0/0/1 unit 0 family mpls
+set interfaces ge-0/0/2 mtu 9000
+set interfaces ge-0/0/2 unit 0 family inet address 10.1.100.12/31
+set interfaces ge-0/0/2 unit 0 family iso
+set interfaces ge-0/0/2 unit 0 family mpls
+set interfaces ge-0/0/3 mtu 9000
+set interfaces ge-0/0/3 unit 0 family inet address 10.1.100.17/31
+set interfaces ge-0/0/3 unit 0 family iso
+set interfaces ge-0/0/3 unit 0 family mpls
+set interfaces fxp0 unit 0 family inet address 192.168.250.111/24
+set interfaces lo0 unit 0 family inet address 10.1.255.11/32
+set interfaces lo0 unit 0 family iso address 49.0001.0001.0001.0011.00
+set interfaces lo0 unit 0 family inet6 address fc00:dead:beef:ffff::11/128
+set routing-instances mgmt_junos routing-options static route 0.0.0.0/0 next-hop 192.168.250.254
+set protocols isis interface ge-0/0/0.0 point-to-point
+set protocols isis interface ge-0/0/1.0 point-to-point
+set protocols isis interface ge-0/0/2.0 point-to-point
+set protocols isis interface ge-0/0/3.0 point-to-point
+set protocols isis interface lo0.0 passive
+set protocols isis level 1 disable
+set protocols isis level 2 wide-metrics-only
+set protocols ldp interface ge-0/0/0.0
+set protocols ldp interface ge-0/0/1.0
+set protocols ldp interface ge-0/0/2.0
+set protocols ldp interface ge-0/0/3.0
+set protocols mpls interface ge-0/0/0.0
+set protocols mpls interface ge-0/0/1.0
+set protocols mpls interface ge-0/0/2.0
+set protocols mpls interface ge-0/0/3.0
+set protocols rsvp interface ge-0/0/0.0
+set protocols rsvp interface ge-0/0/1.0
+set protocols rsvp interface ge-0/0/2.0
+set protocols rsvp interface ge-0/0/3.0
+set protocols lldp interface all
+set protocols lldp interface fxp0 disable
+
