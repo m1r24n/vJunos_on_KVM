@@ -1,2 +1,5 @@
 #!/bin/bash
-echo 0xfff8 | sudo tee /sys/class/net/${1}/bridge/group_fwd_mask
+for i in $@
+do
+echo 0xfff8 | sudo tee /sys/class/net/${i}/bridge/group_fwd_mask
+done

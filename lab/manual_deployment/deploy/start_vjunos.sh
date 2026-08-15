@@ -1,0 +1,11 @@
+virt-install --name sw2 --disk /disk2/vm/manual/sw2.qcow2,device=disk \
+    --cpu IvyBridge,+vmx \
+    --ram 5120 --vcpu 4  \
+    --osinfo ubuntu22.04 \
+    --network=bridge:br0,model=virtio \
+    --network=bridge:lan2,model=virtio \
+    --network=bridge:wan1,model=virtio \
+    --network=bridge:wan2,model=virtio \
+    --console pty,target_type=serial \
+    --noautoconsole --hvm --accelerate  --vnc \
+    --virt-type=kvm --boot hd  --import 

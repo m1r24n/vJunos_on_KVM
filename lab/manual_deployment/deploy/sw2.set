@@ -1,0 +1,23 @@
+set version 26.2R1.7
+set system host-name sw2
+set system root-authentication encrypted-password "$6$9w8OkycA$iONrsvf6HEfR7MibXL3yMeiww8QPVJ5.P0.oeqfEeyjbdrM1cHV9zcGMX9C1OnUv4pgbIqQ/vgmdIttTmGsU90"
+set system login user admin uid 2000
+set system login user admin class super-user
+set system login user admin authentication encrypted-password "$6$nJv4l0kX$mPDbPD9FhWCyN35TuOpRMDzVUK2H49k4eVG7DgTdVNJZBNPV0UaIQsyTigYN.MdJOZGoq6CN6O6o4OJAYDpOY/"
+set system services ssh sftp-server
+set system arp aging-timer 5
+set system syslog file interactive-commands interactive-commands any
+set system syslog file messages any notice
+set system syslog file messages authorization info
+set chassis aggregated-devices ethernet device-count 8
+set chassis network-services enhanced-ip
+set interfaces ge-0/0/1 ether-options 802.3ad ae0
+set interfaces ge-0/0/2 ether-options 802.3ad ae0
+set interfaces ae0 aggregated-ether-options lacp active
+set interfaces ae0 unit 0 family ethernet-switching
+set interfaces fxp0 unit 0 family inet address 192.168.250.102/24
+set interfaces irb unit 0 family inet address 10.0.10.2/24
+set protocols lldp interface all
+set protocols lldp-med interface all
+set vlans default vlan-id 1
+set vlans default l3-interface irb.0
