@@ -1465,9 +1465,9 @@ nameserver {{dns}}
                 #print(net_cfg4)
             with open("interfaces.tmp","w") as f1:
                 f1.write(net_cfg4)
-            # cmd = ["lxc", "file" , "push", "interfaces.tmp",  f"{i}/etc/network/interfaces"]
-            # result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            # output1 = result.stdout
+            cmd = ["lxc", "file" , "push", "interfaces.tmp",  f"{i}/etc/network/interfaces"]
+            result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            output1 = result.stdout
             os.remove("interfaces.tmp")
             if d1['lxc'][i]['type'] == "router":
                 frr_data = d1['lxc'][i]['bgp']

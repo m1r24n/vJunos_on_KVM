@@ -40,36 +40,37 @@
       <source file="/disk2/vm/manual/sw1.qcow2"/>
       <target dev="vda" bus="virtio"/>
     </disk>
-    <disk device="disk" type="file">
-      <driver cache="writeback" name="qemu" type="raw"/>
-      <source file="/disk2/vm/manual/sw1.img"/>
-      <target dev="sda" bus="usb"/>
-    </disk>
     <controller index="0" model="pci-root" type="pci">
       <alias name="pci.0"/>
     </controller>
     <interface type='bridge'>
        <source bridge='br0'/>
       <model type="virtio"/>
-      <target name="sw1_fxp0"/>
+      <target dev="sw1_fxp0"/>
     </interface>
     <interface type="bridge">
-      <source bridge="lan1"/>
+      <source bridge="lan1a"/>
       <model type="virtio"/>
        <mtu size='9600'/>
-      <target name="sw1_ge0"/>
+      <target dev="sw1_ge0"/>
     </interface>
     <interface type="bridge">
       <source bridge="wan1"/>
       <model type="virtio"/>
        <mtu size='9600'/>
-      <target name="sw1_ge1"/>
+      <target dev="sw1_ge1"/>
     </interface>
     <interface type="bridge">
       <source bridge="wan2"/>
       <model type="virtio"/>
        <mtu size='9600'/>
-      <target name="sw1_ge2"/>
+      <target dev="sw1_ge2"/>
+    </interface>
+     <interface type="bridge">
+      <source bridge="lan1b"/>
+      <model type="virtio"/>
+       <mtu size='9600'/>
+      <target dev="sw1_ge3"/>
     </interface>
     <serial type="tcp">
       <source host="127.0.0.1" mode="bind" service="8611"/>

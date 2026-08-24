@@ -46,25 +46,25 @@
     <interface type='bridge'>
        <source bridge='br0'/>
       <model type="virtio"/>
-      <alias name="sw2_fxp0"/>
+      <target dev="sw2_fxp0"/>
     </interface>
     <interface type="bridge">
       <source bridge="lan2"/>
       <model type="virtio"/>
        <mtu size='9600'/>
-      <alias name="sw2_ge0"/>
+      <target dev="sw2_ge0"/>
     </interface>
     <interface type="bridge">
       <source bridge="wan1"/>
       <model type="virtio"/>
        <mtu size='9600'/>
-      <alias name="sw2_ge1"/>
+      <target dev="sw2_ge1"/>
     </interface>
     <interface type="bridge">
       <source bridge="wan2"/>
       <model type="virtio"/>
        <mtu size='9600'/>
-      <alias name="sw2_ge2"/>
+      <target dev="sw2_ge2"/>
     </interface>
     <serial type="tcp">
       <source host="127.0.0.1" mode="bind" service="8612"/>
